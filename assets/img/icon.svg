@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Brand icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b5bff"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M150 256 L256 96 L362 256 L256 416 Z" opacity=".95"/>
+    <path d="M362 96 L468 256 L362 416" opacity=".0"/>
+  </g>
+  <path d="M256 150 L320 256 L256 362 L192 256 Z" fill="#fff" opacity=".9"/>
+</svg>
