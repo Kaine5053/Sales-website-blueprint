@@ -14,6 +14,9 @@
        and a "Save X%" badge are shown automatically.
      • stock — 'in' (default) | 'low' | 'out'. Drives the stock badge and, when
        'out', swaps the CTA to "Notify me".
+     • options — selectable choices shown on the product detail. Each group has
+       a `name` and `choices: [{ label, priceDelta }]`. The first choice is the
+       default; selecting others adjusts the displayed price by priceDelta.
    ============================================================================ */
 
 window.PRODUCTS = [
@@ -59,6 +62,10 @@ window.PRODUCTS = [
       'Advanced controls & reporting',
     ],
     specs: { 'Best for': 'Growing teams', 'Setup': 'Guided', 'Warranty': '2 years', 'Support': 'Priority' },
+    options: [
+      { name: 'Care plan', choices: [{ label: 'Standard (1 yr)', priceDelta: 0 }, { label: '2-year care', priceDelta: 99 }, { label: '3-year care', priceDelta: 169 }] },
+      { name: 'Onboarding', choices: [{ label: 'Self-serve', priceDelta: 0 }, { label: 'Guided setup', priceDelta: 149 }] },
+    ],
     attrs: { useCase: ['small', 'medium'], budget: ['mid', 'high'], experience: ['intermediate'], priority: ['performance', 'support'] },
   },
   {
@@ -80,6 +87,10 @@ window.PRODUCTS = [
       'Custom integrations available',
     ],
     specs: { 'Best for': 'Enterprise', 'Setup': 'White-glove', 'Warranty': '3 years', 'Support': 'Dedicated' },
+    options: [
+      { name: 'Capacity', choices: [{ label: 'Standard', priceDelta: 0 }, { label: 'High (+50%)', priceDelta: 400 }, { label: 'Max (+100%)', priceDelta: 750 }] },
+      { name: 'Support', choices: [{ label: 'Dedicated', priceDelta: 0 }, { label: 'Dedicated 24/7', priceDelta: 300 }] },
+    ],
     attrs: { useCase: ['medium', 'large'], budget: ['high', 'premium'], experience: ['intermediate', 'expert'], priority: ['performance', 'support'] },
   },
   {

@@ -258,6 +258,25 @@
 .pd-icon-btn[aria-pressed="true"] { color: #e0245e; border-color: #e0245e; background: color-mix(in srgb, #e0245e 12%, transparent); }
 .pd-icon-btn svg { width: 18px; height: 18px; }
 
+/* ---- Product detail: variant/option selectors ------------------------ */
+.pd__options { display: flex; flex-direction: column; gap: var(--sp-4); }
+.pd-opt { display: flex; flex-direction: column; gap: var(--sp-2); }
+.pd-opt__name { font-size: var(--fs-xs); font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--text-subtle); }
+.pd-opt__choices { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.pd-opt__choice {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  padding: 0.5em 0.9em;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text); background: var(--surface);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.pd-opt__choice small { color: var(--text-subtle); font-weight: var(--fw-normal); }
+.pd-opt__choice:hover { border-color: var(--brand); }
+.pd-opt__choice[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-tint); }
+.pd-opt__choice[aria-pressed="true"] small { color: var(--brand-text); }
+
 .pd__related { margin-top: var(--sp-2); padding-top: var(--sp-5); border-top: 1px solid var(--border); }
 .pd__related-title { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--text-subtle); margin-bottom: var(--sp-3); }
 .pd__related-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }

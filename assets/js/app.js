@@ -370,10 +370,56 @@
   /* ====================================================================
      PRODUCT DETAIL modal
      ==================================================================== */
+  // Product-detail variant state: which choice index is selected per option group.
+  const pdState = { product: null, sel: [] };
+
+  function optionsHTML(p) {
+    if (!p.options || !p.options.length) return '';
+    return `<div class="pd__options">` + p.options.map((group, gi) => `
+      <div class="pd-opt" role="group" aria-label="${esc(group.name)}">
+        <span class="pd-opt__name">${esc(group.name)}</span>
+        <div class="pd-opt__choices">
+          ${group.choices.map((c, ci) => {
+            const delta = c.priceDelta || 0;
+            const deltaLabel = delta > 0 ? ` (+${money(delta)})` : (delta < 0 ? ` (${money(delta)})` : '');
+            return `<button class="pd-opt__choice" data-opt="${gi}" data-choice="${ci}" aria-pressed="${pdState.sel[gi] === ci}">${esc(c.label)}<small>${deltaLabel}</small></button>`;
+          }).join('')}
+        </div>
+      </div>`).join('') + `</div>`;
+  }
+
+  function pdComputedPrice() {
+    const p = pdState.product;
+    if (!p) return 0;
+    let total = p.price;
+    (p.options || []).forEach((group, gi) => {
+      const c = group.choices[pdState.sel[gi]];
+      if (c) total += (c.priceDelta || 0);
+    });
+    return total;
+  }
+
+  function selectOption(gi, ci) {
+    pdState.sel[gi] = ci;
+    $$(`.pd-opt__choice[data-opt="${gi}"]`).forEach((b) =>
+      b.setAttribute('aria-pressed', String(+b.getAttribute('data-choice') === ci)));
+    // live-update the displayed price (keep any sale strike-through if no options changed it)
+    const priceEl = $('#pd-price');
+    if (priceEl) {
+      const cur = pdComputedPrice();
+      const base = pdState.product.price;
+      priceEl.innerHTML = cur === base
+        ? priceHTML(pdState.product, true)
+        : `<span class="price">${money(cur)}</span> <small>${esc(pdState.product.priceUnit || '')}</small>`;
+    }
+  }
+
   function openProduct(id, fromRoute) {
     const p = PRODUCTS.find((x) => x.id === id);
     if (!p) return;
     pushRecent(id);
+    pdState.product = p;
+    pdState.sel = (p.options || []).map(() => 0);
     const features = (p.features || []).map((f) => `<li>${icon('check')} <span>${esc(f)}</span></li>`).join('');
     const specs = Object.entries(p.specs || {}).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
     const badges = (p.badges || []).map((b) => `<span class="badge ${b.type === 'solid' ? 'badge--solid' : ''}">${esc(b.text)}</span>`).join(' ');
@@ -415,8 +461,9 @@
           <div class="stars">${icon('star').repeat(Math.round(p.rating))}
             <span style="color:var(--text-muted);font-size:.85rem;font-weight:600;margin-left:.25rem">${esc(p.rating)} (${esc(p.reviews)} ${t('reviews')})</span></div>
           <p class="text-muted">${esc(p.description)}</p>
-          <div class="pd__price">${priceHTML(p, true)}</div>
+          <div class="pd__price" id="pd-price">${priceHTML(p, true)}</div>
           <span class="stock-badge ${stockInfo(p).cls}"><span class="stock-dot"></span>${esc(stockInfo(p).label)}</span>
+          ${optionsHTML(p)}
           <ul class="pd__features" role="list">${features}</ul>
           <dl class="pd__specs">${specs}</dl>
           <div class="pd__actions">
@@ -1247,10 +1294,11 @@
      ==================================================================== */
   function initEvents() {
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
+      if (t.hasAttribute('data-opt')) { selectOption(+t.getAttribute('data-opt'), +t.getAttribute('data-choice')); return; }
       if (t.hasAttribute('data-product-notify')) { notifyProduct(t.getAttribute('data-product-notify')); /* fall through to close-modal */ }
       if (t.hasAttribute('data-resource')) { openArticle(Number(t.getAttribute('data-resource'))); return; }
       if (t.hasAttribute('data-product-request')) { addToQuote(t.getAttribute('data-product-request')); /* fall through to close-modal below */ }
