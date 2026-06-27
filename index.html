@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" id="top">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A clean, professional, fully-customisable product sales website blueprint with a guided product finder.">
+  <meta name="theme-color" content="#2563eb">
+  <title>Northwind — Find your perfect product</title>
+
+  <!-- Open Graph / social preview -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Northwind — Find your perfect product">
+  <meta property="og:description" content="Browse our range, compare with confidence, and let our guided finder match you in under a minute.">
+
+  <!-- Fonts (swap or self-host in production) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles (order matters: tokens → base → components → layout) -->
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🧭</text></svg>">
+</head>
+<body>
+  <a class="skip-link" href="#products">Skip to products</a>
+
+  <!-- Announcement bar -->
+  <div class="announce" id="announce"></div>
+
+  <!-- Header -->
+  <header class="site-header" id="site-header">
+    <div class="container">
+      <nav class="nav" aria-label="Primary">
+        <span id="brand-mount"></span>
+        <div class="nav__links" id="nav-links"></div>
+        <span class="nav__spacer"></span>
+        <div class="nav__actions">
+          <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" type="button"></button>
+          <span id="header-cta" style="display:flex;gap:.75rem;align-items:center"></span>
+          <button class="nav__toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" type="button"></button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Mobile drawer -->
+  <div class="mobile-drawer" id="mobile-drawer" data-open="false"></div>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero" id="hero-mount" aria-label="Introduction"></section>
+
+    <!-- Trust logos -->
+    <section class="section section--tight" aria-label="Trusted by">
+      <div class="container">
+        <p class="text-center text-muted" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.5rem">Trusted by industry-leading teams</p>
+        <div class="logos" id="logos-mount"></div>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section class="section" id="products" style="background:var(--bg-subtle)">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <span class="eyebrow">Our range</span>
+          <h2 class="section-title">Explore our products</h2>
+          <p class="section-lead">Browse the full lineup, search and filter to narrow it down — or tap a product for full details. Not sure where to start? Use the finder.</p>
+        </div>
+        <div class="catalog__toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="input" id="catalog-search" type="search" placeholder="Search products…" aria-label="Search products">
+          </div>
+          <div class="filter-chips" id="catalog-filters" role="group" aria-label="Filter by category"></div>
+          <button class="btn btn--secondary" data-action="open-quiz">Help me choose</button>
+        </div>
+        <div class="product-grid" id="product-grid"></div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="section section--tight">
+      <div class="container"><div class="stats" id="stats-mount"></div></div>
+    </section>
+
+    <!-- Features / Why us -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <span class="eyebrow">Why choose us</span>
+          <h2 class="section-title">Built around what matters to you</h2>
+          <p class="section-lead">Everything you’d expect from a tier-one provider — and a few things you wouldn’t.</p>
+        </div>
+        <div class="features-grid" id="features-mount"></div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="section" id="pricing" style="background:var(--bg-subtle)">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <span class="eyebrow">Pricing</span>
+          <h2 class="section-title">Simple, transparent plans</h2>
+          <p class="section-lead" id="pricing-note"></p>
+        </div>
+        <div class="pricing-grid" id="pricing-mount"></div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section" id="testimonials">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <span class="eyebrow">Customer stories</span>
+          <h2 class="section-title">Loved by thousands</h2>
+          <p class="section-lead">Don’t just take our word for it — here’s what our customers say.</p>
+        </div>
+        <div class="testimonials-grid" id="testimonials-mount"></div>
+      </div>
+    </section>
+
+    <!-- CTA band -->
+    <section class="section"><div class="container" id="cta-mount"></div></section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" style="background:var(--bg-subtle)">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <span class="eyebrow">FAQ</span>
+          <h2 class="section-title">Questions, answered</h2>
+          <p class="section-lead">Can’t find what you’re looking for? <a href="#contact" style="color:var(--brand);font-weight:600">Get in touch</a>.</p>
+        </div>
+        <div class="faq" id="faq-mount"></div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section" id="contact">
+      <div class="container">
+        <div class="contact-grid">
+          <div>
+            <span class="eyebrow">Contact</span>
+            <h2 class="section-title" id="contact-heading" style="margin-block:.75rem 1rem"></h2>
+            <p class="section-lead" id="contact-sub" style="margin-bottom:2rem"></p>
+            <div class="contact-info" id="contact-info"></div>
+          </div>
+          <form class="card" id="contact-form" style="padding:2rem;display:flex;flex-direction:column;gap:1.25rem" novalidate>
+            <div class="form-row">
+              <div class="field"><label for="cf-name">Name</label><input class="input" id="cf-name" name="name" required placeholder="Jane Doe"></div>
+              <div class="field"><label for="cf-email">Email</label><input class="input" id="cf-email" name="email" type="email" required placeholder="jane@company.com"></div>
+            </div>
+            <div class="field"><label for="cf-subject">I’m interested in</label>
+              <select class="select" id="cf-subject" name="subject">
+                <option>A product recommendation</option>
+                <option>A custom quote</option>
+                <option>Bulk / enterprise pricing</option>
+                <option>Support</option>
+                <option>Something else</option>
+              </select>
+            </div>
+            <div class="field"><label for="cf-message">Message</label><textarea class="textarea" id="cf-message" name="message" placeholder="Tell us what you’re looking for…"></textarea></div>
+            <button class="btn btn--primary btn--lg btn--block" type="submit">Send message</button>
+            <p class="hint text-center">We typically reply within a few hours. No spam, ever.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" id="footer-mount"></footer>
+
+  <!-- Back to top -->
+  <button class="to-top" id="to-top" aria-label="Back to top" type="button"></button>
+
+  <!-- ============ MODALS ============ -->
+  <div class="modal" id="product-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Product details">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__panel modal__panel--wide">
+      <button class="modal__close" aria-label="Close" data-modal-close></button>
+      <div id="product-modal-content"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="quiz-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Product finder">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__panel">
+      <button class="modal__close" aria-label="Close finder" data-modal-close></button>
+      <div id="quiz-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Scripts (data first, then app) -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/products.js"></script>
+  <script src="assets/js/questionnaire.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

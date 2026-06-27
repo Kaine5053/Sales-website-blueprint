@@ -1,0 +1,12 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Dependencies / build (none yet, but future-proofed)
+node_modules/
+dist/
+
+# Scratch / screenshots
+scratch-*.png
+*.local
