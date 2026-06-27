@@ -137,9 +137,8 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
 ## 7. Suggested next steps (in priority order)
 
 1. **Real product/CMS data** + real imagery.
-2. **Pagination / "load more"** for large catalogues.
-3. **Checkout / payment** flow if this becomes transactional.
-4. Optional: self-host fonts, add more presets, more finder questions.
+2. **Checkout / payment** flow if this becomes transactional.
+3. Optional: self-host fonts, add more presets, more finder questions.
 
 _Done in iteration 14: variant options now carry into the quote basket — chosen
 configuration + computed price flow into the chip and prefilled message; distinct
@@ -148,6 +147,10 @@ configs are separate lines, identical ones dedupe; old id-array quotes migrate._
 _Done in iteration 15: forms are backend-ready — `contact.endpoint` /
 `footer.newsletter.endpoint` in config POST FormData to any form service, with a
 busy state and retry-on-failure; empty endpoints keep the toast-only demo._
+
+_Done in iteration 16: catalogue pagination — `catalog.pageSize` gates a "Show
+more" button (resets on filter/sort, focus moves to first new card, live
+"Showing X of N" hint); defaults to 6 so it activates as the catalogue grows._
 
 ---
 

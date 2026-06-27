@@ -53,6 +53,17 @@ const ok=(n,c)=>{r.push((c?'✓':'✗')+' '+n); if(!c)f++;};
   ok('compare reopens cleanly', (await p.$eval('#compare-modal',m=>m.getAttribute('aria-hidden')))==='false');
   await p.keyboard.press('Escape');
 
+  // pagination / "show more": shrink the page size and confirm it reveals the rest
+  await p.evaluate(()=>document.querySelector('#products').scrollIntoView()); await p.waitForTimeout(120);
+  await p.evaluate(()=>{ window.SITE_CONFIG.catalog.pageSize=3; });
+  await p.click('[data-category="All"]'); await p.waitForTimeout(150);
+  ok('pagination shows first page of 3', (await p.$$('#product-grid .product-card')).length===3);
+  ok('load-more button present', !!(await p.$('[data-load-more]')));
+  await p.click('[data-load-more]'); await p.waitForTimeout(150);
+  ok('load-more reveals the rest', (await p.$$('#product-grid .product-card')).length===6);
+  ok('load-more hides when exhausted', !(await p.$('[data-load-more]')));
+  await p.evaluate(()=>{ window.SITE_CONFIG.catalog.pageSize=6; });
+
   // configurable form backend: success path POSTs to the endpoint + clears form
   await p.evaluate(()=>{
     window.__fetchCalls=[];

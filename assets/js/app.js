@@ -27,6 +27,7 @@
     helpMeChoose: 'Help me choose',
     favourites: 'Favourites',
     productOne: 'product', productMany: 'products',
+    loadMore: 'Show more', showingXofN: 'Showing {shown} of {total}',
     countInCategory: ' in {category}', countInFaves: ' in your favourites', countMatching: ' matching “{q}”',
     emptyTitle: 'No products found.', emptyBody: 'Try a different search or filter — or let us help you choose.',
     favesEmptyTitle: 'No favourites yet.', favesEmptyBody: 'Tap the heart on any product to save it here.',
@@ -242,7 +243,12 @@
   /* ====================================================================
      RENDER: product catalogue (with search + category filters)
      ==================================================================== */
-  const catalogState = { query: '', category: 'All', favesOnly: false, sort: 'featured' };
+  const catalogState = { query: '', category: 'All', favesOnly: false, sort: 'featured', results: [], shown: Infinity };
+  // 0/undefined pageSize = show everything (Infinity).
+  function catalogPageSize() {
+    const n = cfg.catalog ? +cfg.catalog.pageSize : 0;
+    return n > 0 ? n : Infinity;
+  }
   const compareState = { ids: [], max: 4 };
 
   /* Safe localStorage access — never throws (private mode / disabled storage). */
@@ -357,15 +363,50 @@
         (catalogState.query.trim() ? t('countMatching', { q: catalogState.query.trim() }) : '');
     }
 
+    // store the filtered/sorted results and reset to the first page
+    catalogState.results = list;
+    catalogState.shown = catalogPageSize();
+    renderCatalogPage();
+  }
+
+  // Render the current page-slice of the filtered results + the "Show more"
+  // control. Kept separate from filtering so "Show more" never re-filters.
+  function renderCatalogPage(focusNew) {
     const grid = $('#product-grid');
+    const more = $('#catalog-more');
+    const list = catalogState.results;
+    if (!grid) return;
     if (list.length === 0) {
       const favesEmpty = catalogState.favesOnly && faves.ids.length === 0;
       grid.innerHTML = `<div class="empty-state">${icon(favesEmpty ? 'heart' : 'search')}<p><strong>${favesEmpty ? t('favesEmptyTitle') : t('emptyTitle')}</strong><br>${favesEmpty ? t('favesEmptyBody') : t('emptyBody')}</p>
         ${favesEmpty ? '' : `<button class="btn btn--primary" data-action="open-quiz" style="margin-top:1rem">${icon('compass')} ${t('helpMeChoose')}</button>`}</div>`;
+      if (more) { more.hidden = true; more.innerHTML = ''; }
       return;
     }
-    grid.innerHTML = list.map(productCardHTML).join('');
+    const prevShown = focusNew ? Math.max(0, Math.min(catalogState.shown - catalogPageSize(), list.length)) : 0;
+    const slice = list.slice(0, catalogState.shown);
+    grid.innerHTML = slice.map(productCardHTML).join('');
     $$('[data-reveal]', grid).forEach((n) => n.classList.add('is-visible'));
+
+    if (more) {
+      const remaining = list.length - slice.length;
+      if (remaining > 0) {
+        more.hidden = false;
+        more.innerHTML =
+          `<button class="btn btn--secondary" data-load-more aria-controls="product-grid">${t('loadMore')} <span class="catalog-more__n">(+${Math.min(remaining, catalogPageSize())})</span></button>
+           <p class="catalog-more__hint" aria-live="polite">${t('showingXofN', { shown: slice.length, total: list.length })}</p>`;
+      } else { more.hidden = true; more.innerHTML = ''; }
+    }
+    // a11y: after "Show more", move focus to the first newly revealed card
+    if (focusNew) {
+      const cards = $$('.product-card__trigger', grid);
+      if (cards[prevShown]) cards[prevShown].focus();
+    }
+  }
+
+  function loadMoreProducts() {
+    catalogState.shown += catalogPageSize();
+    renderCatalogPage(true);
   }
 
   /* ====================================================================
@@ -1341,7 +1382,7 @@
      ==================================================================== */
   function initEvents() {
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-load-more], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
@@ -1363,6 +1404,7 @@
         if (catalogState.favesOnly) catalogState.category = 'All';
         renderCatalog(); return;
       }
+      if (t.hasAttribute('data-load-more')) { e.preventDefault(); loadMoreProducts(); return; }
       if (t.hasAttribute('data-product')) { openProduct(t.getAttribute('data-product')); return; }
       if (t.hasAttribute('data-category')) {
         catalogState.favesOnly = false;

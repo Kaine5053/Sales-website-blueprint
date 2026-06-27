@@ -22,6 +22,12 @@ window.SITE_CONFIG = {
      Leave empty to use the English defaults. */
   ui: {},
 
+  /* ---- Catalogue behaviour ----
+     pageSize = how many products to show before a "Show more" button appears.
+     Set 0 (or omit) to always show every product. The current demo catalogue
+     fits in one page; raise the catalogue and the button appears automatically. */
+  catalog: { pageSize: 6 },
+
   /* ---- Brand identity ---- */
   brand: {
     name: 'Northwind',
