@@ -43,6 +43,13 @@
     notifyMsg: 'Please let me know when {name} is back in stock.', notifyToast: 'We’ll notify you when {name} is back in stock',
     toastContact: 'Thanks! We’ll be in touch shortly.', toastSubscribe: 'You’re subscribed — welcome aboard!',
     formSending: 'Sending…', toastError: 'Sorry, something went wrong — please try again or email us directly.',
+    addToCart: 'Add to cart', cartTitle: 'Your cart', cartEmpty: 'Your cart is empty.',
+    cartAdded: '{name} added to your cart', cartCheckout: 'Checkout', cartSubtotal: 'Subtotal',
+    cartSecure: 'Secure checkout powered by Stripe', cartContinue: 'Browse products',
+    cartRemove: 'Remove {name}', qtyDecrease: 'Decrease quantity', qtyIncrease: 'Increase quantity',
+    checkoutError: 'Couldn’t start checkout — please try again.', checkoutStarting: 'Starting secure checkout…',
+    checkoutSuccess: 'Thank you! Your order is confirmed.', checkoutCancelled: 'Checkout cancelled — your cart is saved.',
+    viewCart: 'View cart',
     toastCopied: 'Link copied to clipboard', toastCompareMax: 'You can compare up to {max} products at once.',
     stockIn: 'In stock', stockLow: 'Low stock', stockOut: 'Sold out',
   };
@@ -79,6 +86,9 @@
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6"/><circle cx="18" cy="21" r="1.6"/><path d="M2.5 3h2l2.2 12.2a1.6 1.6 0 0 0 1.6 1.3h8.4a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     sun: '<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>',
     moon: '<svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>',
     chevronUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>',
@@ -166,7 +176,11 @@
        <a class="fave-indicator" href="#products" data-faves-only title="Your favourites" aria-label="View favourites">
          ${icon('heart')}<span class="fave-indicator__count" id="fave-count" hidden>0</span>
        </a>
+       ${cartMode ? `<button class="cart-button" id="cart-button" data-open-cart title="${t('viewCart')}" aria-label="${t('viewCart')}">
+         ${icon('cart')}<span class="cart-button__count" hidden>0</span>
+       </button>` : ''}
        <a class="btn btn--primary btn--sm" href="${esc(cfg.headerCta.href)}">${esc(cfg.headerCta.label)}</a>`;
+    renderCartButton();
   }
 
   /* ====================================================================
@@ -323,6 +337,7 @@
             <span class="stars" title="${esc(p.rating)} out of 5">${icon('star')}<span style="font-size:.8rem;color:var(--text-muted);font-weight:600">${esc(p.rating)}</span></span>
           </div>
           <span class="stock-badge ${st.cls}"><span class="stock-dot"></span>${esc(st.label)}</span>
+          ${cartMode && p.stock !== 'out' ? `<button class="btn btn--secondary btn--sm product-card__add" data-add-cart="${esc(p.id)}" aria-label="Add ${esc(p.name)} to cart">${icon('cart')} ${t('addToCart')}</button>` : ''}
         </div>
       </article>`;
   }
@@ -504,7 +519,9 @@
           <div class="pd__actions">
             ${p.stock === 'out'
               ? `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-notify="${esc(p.id)}">${t('pdNotify')} ${icon('arrowRight')}</a>`
-              : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">${t('pdRequest')} ${icon('arrowRight')}</a>`}
+              : (cartMode
+                ? `<button class="btn btn--primary btn--block" data-add-cart="${esc(p.id)}">${icon('cart')} ${t('addToCart')}</button>`
+                : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">${t('pdRequest')} ${icon('arrowRight')}</a>`)}
             <button class="btn btn--secondary" data-compare="${esc(p.id)}">${t('pdAddCompare')}</button>
           </div>
           ${relatedHTML}
@@ -1233,6 +1250,146 @@
   }
 
   /* ====================================================================
+     CART + CHECKOUT — buy-now flow via Stripe Checkout (commerce.mode='cart').
+     Reuses the quote helpers lineKey / linePrice / lineOptionLabels; a cart
+     line adds a qty. With mode='quote' (default) none of this is shown.
+     ==================================================================== */
+  const commerce = cfg.commerce || {};
+  const cartMode = commerce.mode === 'cart';
+
+  const storedCart = store.get('cart', []);
+  const cart = {
+    items: (Array.isArray(storedCart) ? storedCart : []).map((it) => {
+      if (!it || !it.id) return null;
+      return { id: it.id, sel: Array.isArray(it.sel) ? it.sel : defaultSel(it.id),
+        qty: Math.max(1, Math.min(99, Math.floor(+it.qty || 1))) };
+    }).filter((it) => it && PRODUCTS.some((p) => p.id === it.id)),
+  };
+  function persistCart() { store.set('cart', cart.items); }
+  function cartCount() { return cart.items.reduce((n, it) => n + it.qty, 0); }
+  function cartSubtotal() {
+    return cart.items.reduce((sum, it) => {
+      const p = PRODUCTS.find((x) => x.id === it.id);
+      return sum + (p ? linePrice(p, it.sel) * it.qty : 0);
+    }, 0);
+  }
+
+  function addToCart(id, sel, qty) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    if (!p) return;
+    const normSel = Array.isArray(sel)
+      ? (p.options || []).map((g, gi) => { const ci = sel[gi]; return (ci >= 0 && ci < g.choices.length) ? ci : 0; })
+      : defaultSel(id);
+    const q = Math.max(1, Math.min(99, Math.floor(+qty || 1)));
+    const key = lineKey({ id, sel: normSel });
+    const existing = cart.items.find((it) => lineKey(it) === key);
+    if (existing) existing.qty = Math.min(99, existing.qty + q);
+    else cart.items.push({ id, sel: normSel, qty: q });
+    persistCart();
+    toast(t('cartAdded', { name: p.name }));
+    track('add_to_cart', { id, sel: normSel, qty: q });
+    renderCartButton();
+    renderCart();
+  }
+  function removeFromCart(key) {
+    cart.items = cart.items.filter((it) => lineKey(it) !== key);
+    persistCart(); renderCartButton(); renderCart();
+  }
+  function changeQty(key, delta) {
+    const it = cart.items.find((x) => lineKey(x) === key);
+    if (!it) return;
+    const next = it.qty + delta;
+    if (next < 1) cart.items = cart.items.filter((x) => x !== it);
+    else it.qty = Math.min(99, next);
+    persistCart(); renderCartButton(); renderCart();
+  }
+  function clearCart() { cart.items = []; persistCart(); renderCartButton(); renderCart(); }
+
+  function renderCartButton() {
+    const badge = $('#cart-button .cart-button__count');
+    if (!badge) return;
+    const n = cartCount();
+    badge.textContent = n;
+    badge.hidden = n === 0;
+  }
+
+  function renderCart() {
+    const wrap = $('#cart-content');
+    if (!wrap) return;
+    const lines = cart.items.map((it) => {
+      const p = PRODUCTS.find((x) => x.id === it.id);
+      return p ? { key: lineKey(it), p, qty: it.qty, unit: linePrice(p, it.sel), opts: lineOptionLabels(p, it.sel) } : null;
+    }).filter(Boolean);
+
+    if (!lines.length) {
+      wrap.innerHTML = `<div class="cart-head"><h2 id="cart-title">${t('cartTitle')}</h2></div>
+        <div class="cart-empty">${icon('cart')}<p>${t('cartEmpty')}</p>
+          <button class="btn btn--secondary" data-close-modal>${t('cartContinue')}</button></div>`;
+      return;
+    }
+    const rows = lines.map((L) => `
+      <li class="cart-line">
+        <img class="cart-line__img" src="${esc(L.p.image)}" alt="" data-imgfallback="hide">
+        <div class="cart-line__info">
+          <span class="cart-line__name">${esc(L.p.name)}</span>
+          ${L.opts.length ? `<span class="cart-line__opts">${esc(L.opts.join(' · '))}</span>` : ''}
+          <span class="cart-line__unit">${money(L.unit)}</span>
+        </div>
+        <div class="cart-line__qty" role="group" aria-label="Quantity for ${esc(L.p.name)}">
+          <button class="qty-btn" data-cart-qty="${esc(L.key)}" data-delta="-1" aria-label="${t('qtyDecrease')}">${icon('minus')}</button>
+          <span class="qty-val" aria-live="polite">${L.qty}</span>
+          <button class="qty-btn" data-cart-qty="${esc(L.key)}" data-delta="1" aria-label="${t('qtyIncrease')}">${icon('plus')}</button>
+        </div>
+        <span class="cart-line__total">${money(L.unit * L.qty)}</span>
+        <button class="cart-line__remove" data-cart-remove="${esc(L.key)}" aria-label="${t('cartRemove', { name: L.p.name })}">${icon('close')}</button>
+      </li>`).join('');
+    wrap.innerHTML = `
+      <div class="cart-head"><h2 id="cart-title">${t('cartTitle')}</h2></div>
+      <ul class="cart-list" role="list">${rows}</ul>
+      <div class="cart-foot">
+        <div class="cart-foot__row"><span>${t('cartSubtotal')}</span><strong class="cart-foot__total">${money(cartSubtotal())}</strong></div>
+        <button class="btn btn--primary btn--block" data-cart-checkout>${icon('lock')} ${t('cartCheckout')}</button>
+        <p class="cart-secure">${icon('shield')} ${t('cartSecure')}</p>
+      </div>`;
+  }
+
+  function openCart() { renderCart(); openModal('#cart-modal'); }
+
+  function checkout() {
+    if (!cart.items.length) return;
+    const endpoint = commerce.checkoutEndpoint || '/api/checkout';
+    const btn = $('[data-cart-checkout]');
+    if (btn) { btn.disabled = true; btn.textContent = t('checkoutStarting'); }
+    track('begin_checkout', { value: cartSubtotal(), lines: cart.items.length });
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ items: cart.items.map((it) => ({ id: it.id, sel: it.sel, qty: it.qty })) }),
+    })
+      .then((res) => res.json().catch(() => ({})).then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok && data && data.url) { window.location.assign(data.url); return; }
+        throw new Error((data && data.error) || 'checkout');
+      })
+      .catch(() => {
+        toast(t('checkoutError'));
+        if (btn) { btn.disabled = false; btn.innerHTML = `${icon('lock')} ${t('cartCheckout')}`; }
+      });
+  }
+
+  // Returning from Stripe: ?checkout=success|cancelled → toast (+ clear on success).
+  function handleCheckoutReturn() {
+    const params = new URLSearchParams(location.search);
+    const status = params.get('checkout');
+    if (!status) return;
+    if (status === 'success') { clearCart(); toast(t('checkoutSuccess')); }
+    else if (status === 'cancelled') { toast(t('checkoutCancelled')); }
+    params.delete('checkout');
+    const qs = params.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+  }
+
+  /* ====================================================================
      COOKIE CONSENT + ANALYTICS (analytics loads only after consent)
      ==================================================================== */
   function track(event, data) {
@@ -1399,7 +1556,7 @@
     }, true);
 
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-load-more], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-add-cart], [data-open-cart], [data-cart-remove], [data-cart-qty], [data-cart-checkout], [data-resource], [data-product], [data-category], [data-filter], [data-load-more], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
@@ -1413,6 +1570,17 @@
         addToQuote(rid, sel); /* fall through to close-modal below */
       }
       if (t.hasAttribute('data-quote-remove')) { e.preventDefault(); removeFromQuote(t.getAttribute('data-quote-remove')); return; }
+      if (t.hasAttribute('data-add-cart')) {
+        e.preventDefault(); e.stopPropagation();
+        const cid = t.getAttribute('data-add-cart');
+        // carry the live variant selection when adding from that product's open modal
+        const sel = (pdState.product && pdState.product.id === cid) ? pdState.sel.slice() : null;
+        addToCart(cid, sel, 1); return;
+      }
+      if (t.hasAttribute('data-open-cart')) { e.preventDefault(); openCart(); return; }
+      if (t.hasAttribute('data-cart-remove')) { e.preventDefault(); removeFromCart(t.getAttribute('data-cart-remove')); return; }
+      if (t.hasAttribute('data-cart-qty')) { e.preventDefault(); changeQty(t.getAttribute('data-cart-qty'), Number(t.getAttribute('data-delta'))); return; }
+      if (t.hasAttribute('data-cart-checkout')) { e.preventDefault(); checkout(); return; }
       if (t.hasAttribute('data-fave')) { e.preventDefault(); e.stopPropagation(); toggleFave(t.getAttribute('data-fave')); return; }
       if (t.hasAttribute('data-share')) { e.preventDefault(); e.stopPropagation(); shareProduct(t.getAttribute('data-share')); return; }
       if (t.hasAttribute('data-compare')) { e.preventDefault(); e.stopPropagation(); toggleCompare(t.getAttribute('data-compare')); return; }
@@ -1570,6 +1738,8 @@
     safe('themeSwitcher', renderThemeSwitcher);
     safe('compareTray', renderCompareTray);
     safe('quote', renderQuote);
+    safe('cart', () => { renderCartButton(); renderCart(); });
+    safe('checkoutReturn', handleCheckoutReturn);
     safe('structuredData', injectStructuredData);
     safe('events', initEvents);
     safe('scroll', initScroll);

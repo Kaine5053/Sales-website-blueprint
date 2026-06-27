@@ -184,6 +184,32 @@ selection). While a request is in flight the submit button is disabled and shows
 “Sending…”; on a network/HTTP error the form is left intact so the visitor can
 retry. No keys or secrets live in the repo — only the endpoint URL.
 
+### Selling: quote requests vs. Stripe checkout
+
+`config.commerce.mode` switches the buying flow:
+
+- **`'quote'` (default)** — lead-gen. Products go into a quote basket that
+  pre-fills the contact form. No payment, no backend.
+- **`'cart'`** — buy-now. Products go into a cart and check out via **Stripe
+  Checkout** (Stripe's hosted, PCI-compliant payment page). Enable it with:
+
+  1. Set `commerce: { mode: 'cart' }` in `config.js`.
+  2. Deploy on a host that runs the `api/checkout.js` serverless function
+     (Vercel does this automatically — `vercel.json` bundles the catalogue with
+     it via `includeFiles`).
+  3. In your host's **environment variables** (never in the repo) set
+     `STRIPE_SECRET_KEY` (your `sk_live_…` / `sk_test_…`), and optionally
+     `CHECKOUT_BASE_URL` (the absolute site URL for the post-payment redirect;
+     defaults to the request host).
+  4. Optionally add `stripePriceId: 'price_…'` to products in `products.js` to
+     bill pre-created Stripe Prices. Without one, the price from `products.js`
+     is used (built into inline `price_data`), so it works immediately.
+
+  **The server never trusts client-sent prices** — `api/checkout.js` recomputes
+  every line (incl. variant deltas) from the same `products.js` the site renders
+  from. After payment, Stripe returns the buyer to `/?checkout=success` (cart is
+  cleared) or `/?checkout=cancelled`.
+
 ### Security headers (CSP etc.)
 
 `vercel.json` ships a hardened header set applied to every route: a

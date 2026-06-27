@@ -122,8 +122,14 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
   computed price travel from the detail modal into the quote chip and the
   prefilled contact message. Distinct configurations of the same product are
   separate quote lines; identical ones dedupe. (Done — iteration 14.)
+- **Payment is Stripe-ready, off by default** — `commerce.mode` is `'quote'`
+  (lead-gen). Set it to `'cart'` and the buy-now flow + `api/checkout.js` (Stripe
+  Checkout) activate; needs `STRIPE_SECRET_KEY` in the host env (never the repo).
+  Server sources all prices from `products.js`, so client price-tampering can't
+  work. (Done — iteration 19; see README "Selling".)
 - **Analytics** is a no-op stub until you set `analytics.provider`/`id` in config
-  AND the visitor accepts cookies.
+  AND the visitor accepts cookies. With cart mode + a third-party analytics
+  script, add its origin to `script-src` in the CSP (`vercel.json`).
 - **Images are gradient SVG placeholders** in `assets/img/` — swap for real assets.
 - **Live-URL verification gap (environment-specific):** the original build ran in
   a sandbox whose network policy blocked outbound to `vercel.app`, so the live
@@ -137,8 +143,10 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
 ## 7. Suggested next steps (in priority order)
 
 1. **Real product/CMS data** + real imagery.
-2. **Checkout / payment** flow if this becomes transactional.
-3. Optional: self-host fonts, add more presets, more finder questions.
+2. **Live stock** behind the static `stock` field (a configurable stock endpoint).
+3. An **interactive setup guide** / onboarding checklist for non-technical owners.
+4. Optional: self-host fonts, add more presets, more finder questions, order
+   confirmation emails (Stripe webhook → email), variant-level Stripe Price IDs.
 
 _Done in iteration 14: variant options now carry into the quote basket — chosen
 configuration + computed price flow into the chip and prefilled message; distinct
@@ -155,6 +163,16 @@ more" button (resets on filter/sort, focus moves to first new card, live
 _Done in iteration 17: richer demo catalogue (12 products, 4 per tier) with new
 gradient images and varied pricing/stock/options — activates pagination on the
 home page and exercises sort/filter/compare more fully._
+
+_Done in iteration 18: production hardening — full security-header set + CSP
+(`script-src 'self'`; inline onerror handlers replaced by a delegated one),
+canonical/og/twitter tags + generated og.png. Smoke guards against inline
+handlers; verified zero CSP violations against the real headers._
+
+_Done in iteration 19: cart + Stripe Checkout (`commerce.mode='cart'`) —
+add-to-cart (carrying variants), cart drawer with qty, and a price-authoritative
+`api/checkout.js` serverless function (server sources prices, env-only secret).
+`tests/api.cjs` + `tests/cart.cjs` cover it. Default mode stays `'quote'`._
 
 ---
 

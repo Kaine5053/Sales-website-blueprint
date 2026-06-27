@@ -7,10 +7,12 @@
     "start": "npx --yes serve .",
     "serve": "npx --yes serve .",
     "check": "node scripts/check.mjs",
+    "test:api": "node tests/api.cjs",
     "test:e2e": "node tests/regression.cjs",
     "test:edge": "node tests/edge.cjs",
+    "test:cart": "node tests/cart.cjs",
     "test:a11y": "node tests/a11y.cjs",
-    "test": "npm run check && npm run test:e2e && npm run test:a11y"
+    "test": "npm run check && npm run test:api && npm run test:e2e && npm run test:edge && npm run test:cart && npm run test:a11y"
   },
   "devDependencies": {
     "axe-core": "^4.12.1",
