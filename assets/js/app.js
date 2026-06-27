@@ -211,10 +211,12 @@
   const catalogState = { query: '', category: 'All', favesOnly: false };
   const compareState = { ids: [], max: 4 };
 
-  /* localStorage-backed lists (favourites + recently viewed) */
+  /* Safe localStorage access — never throws (private mode / disabled storage). */
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } };
   const store = {
-    get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
-    set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch { /* ignore */ } },
+    get(key, fallback) { try { return JSON.parse(lsGet(key)) ?? fallback; } catch { return fallback; } },
+    set(key, val) { lsSet(key, JSON.stringify(val)); },
   };
   const faves = { ids: store.get('faves', []) };
   const recent = { ids: store.get('recent', []) };
@@ -362,7 +364,7 @@
           <dl class="pd__specs">${specs}</dl>
           <div class="pd__actions">
             ${p.stock === 'out'
-              ? `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Notify me when available ${icon('arrowRight')}</a>`
+              ? `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-notify="${esc(p.id)}">Notify me when available ${icon('arrowRight')}</a>`
               : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Request this product ${icon('arrowRight')}</a>`}
             <button class="btn btn--secondary" data-compare="${esc(p.id)}">Add to compare</button>
           </div>
@@ -669,10 +671,30 @@
       renderQuizStep(); // re-render to reflect multi-select + enable Next
     } else {
       quiz.answers[q.id] = value;
-      // auto-advance for single-select after a short beat
+      // auto-advance for single-select after a short beat. Only ever one pending
+      // timer, and any manual Next/Back/restart cancels it (prevents skipping).
       renderQuizStep();
-      setTimeout(() => { quiz.step++; renderQuizStep(); }, 260);
+      if (quiz._t) clearTimeout(quiz._t);
+      quiz._t = setTimeout(() => { quiz._t = null; quizAdvance(); }, 260);
     }
+  }
+
+  // Single entry point for moving forward; cancels any pending auto-advance so a
+  // click during the 260ms window can't double-increment the step.
+  function quizAdvance() {
+    if (quiz._t) { clearTimeout(quiz._t); quiz._t = null; }
+    quiz.step++;
+    renderQuizStep();
+  }
+  function quizGoBack() {
+    if (quiz._t) { clearTimeout(quiz._t); quiz._t = null; }
+    quiz.step = Math.max(-1, quiz.step - 1);
+    renderQuizStep();
+  }
+  function quizRestart() {
+    if (quiz._t) { clearTimeout(quiz._t); quiz._t = null; }
+    quiz.step = -1; quiz.answers = {};
+    renderQuizStep();
   }
 
   /* ====================================================================
@@ -788,7 +810,7 @@
     (applyPreset._applied || []).forEach((k) => root.style.removeProperty(k));
     applyPreset._applied = Object.keys(preset.vars || {});
     Object.entries(preset.vars || {}).forEach(([k, v]) => root.style.setProperty(k, v));
-    if (persist) localStorage.setItem('preset', id);
+    if (persist) lsSet('preset', id);
     $$('#theme-presets .theme-preset').forEach((b) =>
       b.setAttribute('aria-pressed', b.getAttribute('data-preset') === preset.id));
   }
@@ -809,7 +831,7 @@
     });
 
     // restore saved preset
-    const saved = localStorage.getItem('preset');
+    const saved = lsGet('preset');
     applyPreset(saved && PRESETS.some((p) => p.id === saved) ? saved : 'default', false);
 
     // sync dark switch with current theme
@@ -861,7 +883,7 @@
      ==================================================================== */
   function initShortcuts() {
     document.addEventListener('keydown', (e) => {
-      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '');
       if (typing) return;
       if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); openQuiz(); }
       else if (e.key === '/') {
@@ -965,6 +987,23 @@
   }
   function clearQuote() { quote.ids = []; store.set('quote', []); renderQuote(); }
 
+  // Out-of-stock "notify me": prefills the contact form without quote language.
+  function notifyProduct(id) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    if (!p) return;
+    const msg = $('#cf-message');
+    const subject = $('#cf-subject');
+    if (subject) subject.value = 'Something else';
+    if (msg && (!msg.value || msg.dataset.auto === '1')) {
+      msg.value = `Please let me know when ${p.name} is back in stock.`;
+      delete msg.dataset.auto;
+    }
+    const contact = $('#contact');
+    if (contact) contact.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast(`We’ll notify you when ${p.name} is back in stock`);
+    track('notify_request', { id });
+  }
+
   function renderQuote(prefill) {
     const basket = $('#quote-basket');
     const list = $('#quote-list');
@@ -1029,7 +1068,7 @@
     const c = cfg.cookies;
     const banner = $('#cookie-banner');
     if (!c || !c.show || !banner) { banner?.remove(); maybeInitAnalyticsFromStored(); return; }
-    const choice = localStorage.getItem('cookie-consent');
+    const choice = lsGet('cookie-consent');
     if (choice === 'accepted') { window.__consent = 'accepted'; initAnalytics(); return; }
     if (choice === 'declined') { window.__consent = 'declined'; return; }
 
@@ -1039,7 +1078,7 @@
     banner.hidden = false;
     document.body.classList.add('has-cookie');
     const decide = (val) => {
-      localStorage.setItem('cookie-consent', val);
+      lsSet('cookie-consent', val);
       window.__consent = val;
       banner.hidden = true;
       document.body.classList.remove('has-cookie');
@@ -1049,14 +1088,14 @@
     $('#cookie-decline').addEventListener('click', () => decide('declined'));
   }
   function maybeInitAnalyticsFromStored() {
-    if (localStorage.getItem('cookie-consent') === 'accepted') { window.__consent = 'accepted'; initAnalytics(); }
+    if (lsGet('cookie-consent') === 'accepted') { window.__consent = 'accepted'; initAnalytics(); }
   }
 
   /* ====================================================================
      THEME toggle
      ==================================================================== */
   function initTheme() {
-    const stored = localStorage.getItem('theme');
+    const stored = lsGet('theme');
     if (stored) document.documentElement.setAttribute('data-theme', stored);
     else if (window.matchMedia('(prefers-color-scheme: dark)').matches)
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -1064,7 +1103,7 @@
   function toggleTheme() {
     const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', cur);
-    localStorage.setItem('theme', cur);
+    lsSet('theme', cur);
   }
 
   /* ====================================================================
@@ -1150,10 +1189,11 @@
      ==================================================================== */
   function initEvents() {
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product-request], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
+      if (t.hasAttribute('data-product-notify')) { notifyProduct(t.getAttribute('data-product-notify')); /* fall through to close-modal */ }
       if (t.hasAttribute('data-resource')) { openArticle(Number(t.getAttribute('data-resource'))); return; }
       if (t.hasAttribute('data-product-request')) { addToQuote(t.getAttribute('data-product-request')); /* fall through to close-modal below */ }
       if (t.hasAttribute('data-quote-remove')) { e.preventDefault(); removeFromQuote(t.getAttribute('data-quote-remove')); return; }
@@ -1178,11 +1218,12 @@
         return;
       }
       if (t.hasAttribute('data-quiz-option')) { quizSelect(t.getAttribute('data-quiz-option')); return; }
-      if (t.hasAttribute('data-quiz-next')) { quiz.step++; renderQuizStep(); return; }
-      if (t.hasAttribute('data-quiz-back')) { quiz.step = Math.max(-1, quiz.step - 1); renderQuizStep(); return; }
-      if (t.hasAttribute('data-quiz-restart')) { quiz.step = -1; quiz.answers = {}; renderQuizStep(); return; }
+      if (t.hasAttribute('data-quiz-next')) { quizAdvance(); return; }
+      if (t.hasAttribute('data-quiz-back')) { quizGoBack(); return; }
+      if (t.hasAttribute('data-quiz-restart')) { quizRestart(); return; }
       if (t.hasAttribute('data-close-modal') || t.hasAttribute('data-modal-close')) {
         const m = t.closest('.modal'); if (m) closeModal(m);
+        return;
       }
       if (t.hasAttribute('data-close-drawer')) { closeDrawer(); }
     });
@@ -1198,11 +1239,8 @@
       if (e.key === 'Escape') { closeAllModals(); closeDrawer(); }
     });
 
-    // modal backdrop + close buttons
-    $$('.modal').forEach((m) => {
-      $('.modal__backdrop', m)?.addEventListener('click', () => closeModal(m));
-      $('.modal__close', m)?.addEventListener('click', () => closeModal(m));
-    });
+    // Modal backdrop + close buttons are handled by the delegated [data-modal-close]
+    // listener above — no direct listeners here (avoids closing twice).
 
     // theme
     $('#theme-toggle')?.addEventListener('click', toggleTheme);
@@ -1262,39 +1300,48 @@
   /* ====================================================================
      Boot
      ==================================================================== */
+  // Run a boot step in isolation: a single bad config section logs a warning
+  // instead of aborting the whole page (important — the blueprint is config-edited).
+  function safe(label, fn) {
+    try { fn(); }
+    catch (err) { console.warn(`[blueprint] "${label}" failed to render:`, err); }
+  }
+
   function init() {
-    initTheme();
-    renderAnnouncement();
-    renderHeader();
-    renderHero();
-    renderTrust();
-    renderFeatures();
-    renderCatalog();
-    renderPricing();
-    renderTestimonials();
-    renderResources();
-    renderFaq();
-    renderCtaBand();
-    renderContact();
-    renderRecentlyViewed();
-    renderFooter();
-    updateFaveCount();
-    $('#nav-toggle').innerHTML = icon('menu');
-    $('#theme-toggle').innerHTML = icon('sun') + icon('moon');
-    $('#to-top').innerHTML = icon('chevronUp');
-    renderThemeSwitcher();
-    renderCompareTray();
-    renderQuote();
-    injectStructuredData();
-    initEvents();
-    initScroll();
-    initCounters();
-    initShortcuts();
-    initCookies();
+    safe('theme', initTheme);
+    safe('announcement', renderAnnouncement);
+    safe('header', renderHeader);
+    safe('hero', renderHero);
+    safe('trust', renderTrust);
+    safe('features', renderFeatures);
+    safe('catalog', renderCatalog);
+    safe('pricing', renderPricing);
+    safe('testimonials', renderTestimonials);
+    safe('resources', renderResources);
+    safe('faq', renderFaq);
+    safe('ctaBand', renderCtaBand);
+    safe('contact', renderContact);
+    safe('recentlyViewed', renderRecentlyViewed);
+    safe('footer', renderFooter);
+    safe('faveCount', updateFaveCount);
+    safe('chrome-icons', () => {
+      $('#nav-toggle').innerHTML = icon('menu');
+      $('#theme-toggle').innerHTML = icon('sun') + icon('moon');
+      $('#to-top').innerHTML = icon('chevronUp');
+    });
+    safe('themeSwitcher', renderThemeSwitcher);
+    safe('compareTray', renderCompareTray);
+    safe('quote', renderQuote);
+    safe('structuredData', injectStructuredData);
+    safe('events', initEvents);
+    safe('scroll', initScroll);
+    safe('counters', initCounters);
+    safe('shortcuts', initShortcuts);
+    safe('cookies', initCookies);
 
     // routing: handle initial hash + future changes (deep links / share / back button)
     window.addEventListener('hashchange', handleRoute);
-    handleRoute();
+    safe('route', handleRoute);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
