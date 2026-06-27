@@ -184,6 +184,25 @@ selection). While a request is in flight the submit button is disabled and shows
 “Sending…”; on a network/HTTP error the form is left intact so the visitor can
 retry. No keys or secrets live in the repo — only the endpoint URL.
 
+### Security headers (CSP etc.)
+
+`vercel.json` ships a hardened header set applied to every route: a
+**Content-Security-Policy** (`script-src 'self'` — no inline scripts, which is
+why image fallbacks use a delegated handler, not inline `onerror`),
+`Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: DENY`, `Referrer-Policy` and a restrictive `Permissions-Policy`.
+The CSP allows Google Fonts, `https:` images (so you can host real product
+imagery anywhere) and `https:` connections (so your configured form endpoint
+works). **If you enable a third-party analytics script** (GA4, Plausible), add
+its script origin to `script-src` in `vercel.json`. `npm run check` fails the
+build if an inline `on*=` handler is reintroduced (it would be CSP-blocked).
+
+### Before you go live (domain placeholders)
+
+Swap `https://sales-website-blueprint.vercel.app` for your domain in
+`sitemap.xml`, `robots.txt`, and the `canonical` / `og:url` / `og:image` tags in
+`index.html`, and replace `assets/img/og.png` with your own 1200×630 share image.
+
 **Analytics** is already wired to a single `track()` helper in `app.js` and gated
 behind cookie consent. Set `analytics.provider` and `analytics.id` in `config.js`
 to `'ga4'` (with a `G-XXXX` id) or `'plausible'` (with your domain); leave it as

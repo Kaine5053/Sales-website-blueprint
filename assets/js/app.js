@@ -208,7 +208,7 @@
           </div>
           <div class="hero__visual" data-reveal data-reveal-delay="1">
             <img src="${esc(h.image)}" alt="Product showcase" loading="eager" width="600" height="510"
-                 onerror="this.style.display='none'">
+                 data-imgfallback="none">
             <div class="hero__floating hero__floating--tl">${icon(h.floatingTop.icon)} ${esc(h.floatingTop.text)}</div>
             <div class="hero__floating hero__floating--br">${icon(h.floatingBottom.icon)} ${esc(h.floatingBottom.text)}</div>
           </div>
@@ -309,7 +309,7 @@
         </button>
         <div class="product-card__media">
           <img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" width="320" height="220"
-               onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'pd-fallback'}))">
+               data-imgfallback="replace">
           ${badges ? `<div class="product-card__badges">${badges}</div>` : ''}
         </div>
         <div class="product-card__body">
@@ -474,7 +474,7 @@
         <div class="pd__related-list">
           ${related.map((r) => `
             <button class="pd-related-card" data-product="${esc(r.id)}">
-              <img src="${esc(r.image)}" alt="${esc(r.name)}" onerror="this.style.visibility='hidden'">
+              <img src="${esc(r.image)}" alt="${esc(r.name)}" data-imgfallback="hide">
               <span><span class="pd-related-name">${esc(r.name)}</span><span class="pd-related-price">${money(r.price)}</span></span>
             </button>`).join('')}
         </div>
@@ -483,7 +483,7 @@
     $('#product-modal-content').innerHTML = `
       <div class="pd">
         <div class="pd__media">
-          <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.opacity=0">
+          <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="dim">
         </div>
         <div class="pd__body">
           <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
@@ -619,7 +619,7 @@
     section.hidden = false;
     $('#recent-mount').innerHTML = items.map((p) => `
       <button class="recent-card" data-product="${esc(p.id)}" title="${esc(p.name)}">
-        <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+        <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="hide">
         <span class="recent-card__name">${esc(p.name)}</span>
         <span class="recent-card__price">${money(p.price)}</span>
       </button>`).join('');
@@ -775,7 +775,7 @@
         : 'A solid all-round choice';
       return `
         <div class="quiz-pick" data-product="${esc(p.id)}" role="button" tabindex="0">
-          <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+          <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="hide">
           <div class="quiz-pick__body">
             ${i === 0 ? `<span class="badge badge--solid">${icon('sparkles')} ${t('quizTopMatch')}</span>` : ''}
             <div style="font-weight:700;margin-top:.25rem">${esc(p.name)}</div>
@@ -887,7 +887,7 @@
 
     const head = items.map((p) => `
       <th class="ct-product" scope="col">
-        <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+        <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="hide">
         <div class="ct-name">${esc(p.name)}</div>
         <div class="product-card__cat">${esc(p.category)}</div>
       </th>`).join('');
@@ -1190,7 +1190,7 @@
     basket.hidden = lines.length === 0;
     list.innerHTML = lines.map((L) => `
       <li class="quote-chip">
-        <img src="${esc(L.p.image)}" alt="" onerror="this.style.visibility='hidden'">
+        <img src="${esc(L.p.image)}" alt="" data-imgfallback="hide">
         <span class="quote-chip__text">
           <span class="quote-chip__name">${esc(L.p.name)}</span>
           ${L.opts.length ? `<span class="quote-chip__opts">${esc(L.opts.join(' · '))}</span>` : ''}
@@ -1384,6 +1384,20 @@
      Global event delegation
      ==================================================================== */
   function initEvents() {
+    // Image-load fallbacks via delegation (replaces inline onerror= handlers so
+    // a strict CSP can use script-src 'self' with no 'unsafe-inline'). The
+    // `error` event doesn't bubble, so listen in the capture phase.
+    document.addEventListener('error', (e) => {
+      const el = e.target;
+      if (!(el instanceof HTMLImageElement) || !el.hasAttribute('data-imgfallback')) return;
+      switch (el.getAttribute('data-imgfallback')) {
+        case 'replace': { const d = document.createElement('div'); d.className = 'pd-fallback'; el.replaceWith(d); break; }
+        case 'none': el.style.display = 'none'; break;
+        case 'dim': el.style.opacity = '0'; break;
+        default: el.style.visibility = 'hidden'; // 'hide'
+      }
+    }, true);
+
     document.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-load-more], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;

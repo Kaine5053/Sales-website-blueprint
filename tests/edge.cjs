@@ -82,6 +82,17 @@ const ok=(n,c)=>{r.push((c?'✓':'✗')+' '+n); if(!c)f++;};
   await p.click('#contact-form [type="submit"]'); await p.waitForTimeout(200);
   ok('contact form kept intact after failed POST', (await p.$eval('#cf-name',n=>n.value))==='Retry Me');
 
+  // image fallback now runs via a delegated capture-phase handler (CSP-safe,
+  // no inline onerror): a broken image with data-imgfallback should be hidden
+  const fb = await p.evaluate(()=> new Promise((resolve)=>{
+    const img=document.createElement('img');
+    img.setAttribute('data-imgfallback','hide');
+    img.addEventListener('error', ()=> setTimeout(()=>resolve(img.style.visibility),60));
+    img.src='/this-image-does-not-exist-'+Math.random().toString(36).slice(2)+'.png';
+    document.body.appendChild(img);
+  }));
+  ok('delegated image fallback hides broken img', fb==='hidden');
+
   ok('no JS errors during edge tests', errors.length===0);
   console.log(r.join('\n')); if(errors.length) console.log('\nERRORS:\n'+errors.join('\n'));
   console.log('\n'+(f?`\x1b[31m${f} FAILED\x1b[0m`:'\x1b[32mALL PASS\x1b[0m'));

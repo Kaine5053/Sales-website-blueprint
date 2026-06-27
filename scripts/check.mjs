@@ -72,6 +72,16 @@ for (const [file, name, ok] of sandboxChecks) {
   } catch (e) { fail(`${file} — ${e.message}`); }
 }
 
+/* 5. CSP compatibility: no inline event handlers ------------------------ */
+// The shipped CSP uses script-src 'self' (no 'unsafe-inline'), so inline
+// on*="..." handlers would be silently blocked. Guard against reintroducing them.
+console.log('\nCSP — no inline event handlers:');
+for (const file of ['index.html', '404.html', 'assets/js/app.js']) {
+  const src = readFileSync(join(root, file), 'utf8');
+  const hits = [...src.matchAll(/\son[a-z]+\s*=\s*["']/gi)].map((m) => m[0].trim());
+  hits.length === 0 ? pass(`${file} — none`) : fail(`${file} — found inline handler(s): ${[...new Set(hits)].join(', ')}`);
+}
+
 /* Cross-check: every product image referenced exists -------------------- */
 console.log('\nProduct images:');
 try {
