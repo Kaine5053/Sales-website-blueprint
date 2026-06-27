@@ -152,6 +152,10 @@ _Done in iteration 16: catalogue pagination — `catalog.pageSize` gates a "Show
 more" button (resets on filter/sort, focus moves to first new card, live
 "Showing X of N" hint); defaults to 6 so it activates as the catalogue grows._
 
+_Done in iteration 17: richer demo catalogue (12 products, 4 per tier) with new
+gradient images and varied pricing/stock/options — activates pagination on the
+home page and exercises sort/filter/compare more fully._
+
 ---
 
 ## 8. Continuing in a fresh session

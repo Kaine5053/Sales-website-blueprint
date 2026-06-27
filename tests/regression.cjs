@@ -15,17 +15,18 @@ const ok  = (n, c) => { results.push((c?'✓':'✗')+' '+n); if(!c) failed++; };
   await page.evaluate(()=>localStorage.clear());
   await page.reload({ waitUntil:'load' }); await page.waitForTimeout(600);
 
-  ok('home renders 6 products', (await page.$$('.product-card')).length===6);
+  ok('home renders first page (6 of 12)', (await page.$$('.product-card')).length===6);
+  ok('load-more present on full catalogue', !!(await page.$('[data-load-more]')));
   ok('JSON-LD present', (await page.$$('script[type="application/ld+json"]')).length===2);
 
   // search
-  await page.fill('#catalog-search','titan'); await page.waitForTimeout(250);
+  await page.fill('#catalog-search','apex'); await page.waitForTimeout(250);
   ok('search filters to 1', (await page.$$('.product-card')).length===1);
   await page.fill('#catalog-search',''); await page.waitForTimeout(250);
 
   // category filter
   await page.click('[data-category="Enterprise"]'); await page.waitForTimeout(200);
-  ok('Enterprise filter shows 2', (await page.$$('.product-card')).length===2);
+  ok('Enterprise filter shows 4', (await page.$$('.product-card')).length===4);
   await page.click('[data-category="All"]'); await page.waitForTimeout(200);
 
   // finder full flow
