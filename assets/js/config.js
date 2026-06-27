@@ -113,6 +113,18 @@ window.SITE_CONFIG = {
     { q: 'Can I get a custom quote for bulk orders?', a: 'Absolutely. Head to the contact section or hit “Get a quote” and our team will put together tailored pricing for your volume.' },
   ],
 
+  /* ---- Resources / blog (set posts:[] to hide the whole section) ---- */
+  resources: {
+    eyebrow: 'Resources',
+    title: 'Guides & insights',
+    lead: 'Practical advice to help you choose well and get the most from your purchase.',
+    posts: [
+      { category: 'Buying guide', title: 'How to choose the right product for your needs', excerpt: 'A simple framework for weighing up budget, scale and features — without the jargon.', readTime: '6 min read', icon: 'compass', color: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
+      { category: 'Comparison', title: 'Essentials vs Professional vs Enterprise', excerpt: 'Which tier is right for you? We break down the real-world differences side by side.', readTime: '8 min read', icon: 'scale', color: 'linear-gradient(135deg,#0ea5e9,#2563eb)' },
+      { category: 'Tips', title: '5 mistakes to avoid when buying', excerpt: 'Save time and money by sidestepping the most common pitfalls our customers report.', readTime: '4 min read', icon: 'bolt', color: 'linear-gradient(135deg,#14b8a6,#0d9488)' },
+    ],
+  },
+
   /* ---- Final CTA band ---- */
   ctaBand: {
     title: 'Ready to find your perfect product?',

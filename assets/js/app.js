@@ -61,6 +61,12 @@
     instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>',
     palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20c1.1 0 2-.9 2-2 0-.5-.2-.95-.5-1.3-.3-.34-.5-.79-.5-1.2 0-.83.67-1.5 1.5-1.5H16a6 6 0 006-6c0-5-4.5-8-10-8z"/><circle cx="7.5" cy="10.5" r="1.2" fill="currentColor"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/><circle cx="16.5" cy="10.5" r="1.2" fill="currentColor"/></svg>',
     scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 7h10M5 21h14M3 11l3-6 3 6a3 3 0 01-6 0zM15 11l3-6 3 6a3 3 0 01-6 0z"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+    heartFilled: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+    article: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a2 2 0 012 2v13a1 1 0 001 1 1 1 0 001-1V8h-3"/><path d="M4 4a1 1 0 00-1 1v14a2 2 0 002 2h13"/><line x1="7" y1="8" x2="12" y2="8"/><line x1="7" y1="12" x2="12" y2="12"/></svg>',
+    print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>',
   };
   const icon = (name) => I[name] || '';
 
@@ -100,11 +106,14 @@
       cfg.nav.map((i) => `<a href="${esc(i.href)}" data-close-drawer>${esc(i.label)}</a>`).join('') +
       `<a href="${esc(cfg.headerCta.href)}" class="btn btn--primary" data-close-drawer style="margin-top:1rem">${esc(cfg.headerCta.label)}</a>`;
 
-    // header CTA + quiz trigger
+    // header CTA + quiz trigger + favourites indicator
     $('#header-cta').innerHTML =
       `<button class="btn btn--ghost btn--sm" data-action="open-quiz" title="Not sure what you need?">
          ${icon('compass')}<span class="nav__cta-text">Help me choose</span>
        </button>
+       <a class="fave-indicator" href="#products" data-faves-only title="Your favourites" aria-label="View favourites">
+         ${icon('heart')}<span class="fave-indicator__count" id="fave-count" hidden>0</span>
+       </a>
        <a class="btn btn--primary btn--sm" href="${esc(cfg.headerCta.href)}">${esc(cfg.headerCta.label)}</a>`;
   }
 
@@ -182,8 +191,42 @@
   /* ====================================================================
      RENDER: product catalogue (with search + category filters)
      ==================================================================== */
-  const catalogState = { query: '', category: 'All' };
+  const catalogState = { query: '', category: 'All', favesOnly: false };
   const compareState = { ids: [], max: 4 };
+
+  /* localStorage-backed lists (favourites + recently viewed) */
+  const store = {
+    get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
+    set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch { /* ignore */ } },
+  };
+  const faves = { ids: store.get('faves', []) };
+  const recent = { ids: store.get('recent', []) };
+
+  function isFave(id) { return faves.ids.includes(id); }
+  function toggleFave(id) {
+    const i = faves.ids.indexOf(id);
+    if (i >= 0) faves.ids.splice(i, 1); else faves.ids.unshift(id);
+    store.set('faves', faves.ids);
+    // reflect on any heart buttons + header count without full re-render
+    $$(`[data-fave="${cssEsc(id)}"]`).forEach((b) => {
+      const on = isFave(id);
+      b.setAttribute('aria-pressed', on);
+      b.innerHTML = icon(on ? 'heartFilled' : 'heart');
+    });
+    updateFaveCount();
+    if (catalogState.favesOnly) applyCatalogFilter();
+  }
+  function updateFaveCount() {
+    const badge = $('#fave-count');
+    if (!badge) return;
+    badge.textContent = faves.ids.length;
+    badge.hidden = faves.ids.length === 0;
+  }
+  function pushRecent(id) {
+    recent.ids = [id, ...recent.ids.filter((x) => x !== id)].slice(0, 8);
+    store.set('recent', recent.ids);
+  }
+  const cssEsc = (s) => String(s).replace(/"/g, '\\"');
 
   function productCardHTML(p) {
     const badges = (p.badges || []).map((b) =>
@@ -194,6 +237,10 @@
         <button class="compare-toggle" data-compare="${esc(p.id)}" aria-pressed="${isComparing}"
                 title="Add to comparison" aria-label="Compare ${esc(p.name)}">
           ${icon('scale')} Compare
+        </button>
+        <button class="fave-btn" data-fave="${esc(p.id)}" aria-pressed="${isFave(p.id)}"
+                title="Save to favourites" aria-label="Save ${esc(p.name)} to favourites">
+          ${icon(isFave(p.id) ? 'heartFilled' : 'heart')}
         </button>
         <div class="product-card__media">
           <img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" width="320" height="220"
@@ -215,7 +262,8 @@
   function renderCatalog() {
     const cats = ['All', ...new Set(PRODUCTS.map((p) => p.category))];
     $('#catalog-filters').innerHTML = cats.map((c) =>
-      `<button class="chip" data-category="${esc(c)}" aria-pressed="${c === catalogState.category}">${esc(c)}</button>`).join('');
+      `<button class="chip" data-category="${esc(c)}" aria-pressed="${!catalogState.favesOnly && c === catalogState.category}">${esc(c)}</button>`).join('') +
+      `<button class="chip chip--fave" data-faves-only aria-pressed="${catalogState.favesOnly}" title="Show only your saved products">${icon('heart')} Favourites</button>`;
     applyCatalogFilter();
   }
 
@@ -225,12 +273,14 @@
       const inCat = catalogState.category === 'All' || p.category === catalogState.category;
       const inSearch = !q ||
         [p.name, p.tagline, p.description, p.category].join(' ').toLowerCase().includes(q);
-      return inCat && inSearch;
+      const inFaves = !catalogState.favesOnly || isFave(p.id);
+      return inCat && inSearch && inFaves;
     });
     const grid = $('#product-grid');
     if (list.length === 0) {
-      grid.innerHTML = `<div class="empty-state">${icon('search')}<p><strong>No products found.</strong><br>Try a different search or filter — or let us help you choose.</p>
-        <button class="btn btn--primary" data-action="open-quiz" style="margin-top:1rem">${icon('compass')} Help me choose</button></div>`;
+      const favesEmpty = catalogState.favesOnly && faves.ids.length === 0;
+      grid.innerHTML = `<div class="empty-state">${icon(favesEmpty ? 'heart' : 'search')}<p><strong>${favesEmpty ? 'No favourites yet.' : 'No products found.'}</strong><br>${favesEmpty ? 'Tap the heart on any product to save it here.' : 'Try a different search or filter — or let us help you choose.'}</p>
+        ${favesEmpty ? '' : `<button class="btn btn--primary" data-action="open-quiz" style="margin-top:1rem">${icon('compass')} Help me choose</button>`}</div>`;
       return;
     }
     grid.innerHTML = list.map(productCardHTML).join('');
@@ -240,19 +290,46 @@
   /* ====================================================================
      PRODUCT DETAIL modal
      ==================================================================== */
-  function openProduct(id) {
+  function openProduct(id, fromRoute) {
     const p = PRODUCTS.find((x) => x.id === id);
     if (!p) return;
+    pushRecent(id);
     const features = (p.features || []).map((f) => `<li>${icon('check')} <span>${esc(f)}</span></li>`).join('');
     const specs = Object.entries(p.specs || {}).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
     const badges = (p.badges || []).map((b) => `<span class="badge ${b.type === 'solid' ? 'badge--solid' : ''}">${esc(b.text)}</span>`).join(' ');
+    // related = same category first, then top up with nearest-priced others
+    let related = PRODUCTS.filter((x) => x.id !== id && x.category === p.category);
+    if (related.length < 3) {
+      const fillers = PRODUCTS
+        .filter((x) => x.id !== id && !related.includes(x))
+        .sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price));
+      related = related.concat(fillers).slice(0, 3);
+    } else {
+      related = related.slice(0, 3);
+    }
+    const relatedHTML = related.length ? `
+      <div class="pd__related">
+        <h3 class="pd__related-title">Related products</h3>
+        <div class="pd__related-list">
+          ${related.map((r) => `
+            <button class="pd-related-card" data-product="${esc(r.id)}">
+              <img src="${esc(r.image)}" alt="${esc(r.name)}" onerror="this.style.visibility='hidden'">
+              <span><span class="pd-related-name">${esc(r.name)}</span><span class="pd-related-price">${money(r.price)}</span></span>
+            </button>`).join('')}
+        </div>
+      </div>` : '';
+
     $('#product-modal-content').innerHTML = `
       <div class="pd">
         <div class="pd__media">
           <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.opacity=0">
         </div>
         <div class="pd__body">
-          <div style="display:flex;gap:.5rem;flex-wrap:wrap">${badges}</div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+            ${badges}
+            <button class="pd-icon-btn" data-fave="${esc(p.id)}" aria-pressed="${isFave(p.id)}" title="Save to favourites" style="margin-left:auto">${icon(isFave(p.id) ? 'heartFilled' : 'heart')}</button>
+            <button class="pd-icon-btn" data-share="${esc(p.id)}" title="Share this product">${icon('share')}</button>
+          </div>
           <span class="product-card__cat">${esc(p.category)}</span>
           <h2 class="pd__title">${esc(p.name)}</h2>
           <div class="stars">${icon('star').repeat(Math.round(p.rating))}
@@ -262,12 +339,26 @@
           <ul class="pd__features" role="list">${features}</ul>
           <dl class="pd__specs">${specs}</dl>
           <div class="pd__actions">
-            <a class="btn btn--primary btn--block" href="#contact" data-close-modal>Request this product ${icon('arrowRight')}</a>
-            <button class="btn btn--secondary" data-action="open-quiz" data-close-modal>Not sure? Compare</button>
+            <a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Request this product ${icon('arrowRight')}</a>
+            <button class="btn btn--secondary" data-compare="${esc(p.id)}">Add to compare</button>
           </div>
+          ${relatedHTML}
         </div>
       </div>`;
+    if (!fromRoute) setHash('product/' + id);
     openModal('#product-modal');
+    renderRecentlyViewed();
+  }
+
+  function shareProduct(id) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    if (!p) return;
+    const url = location.origin + location.pathname + '#product/' + id;
+    const data = { title: `${p.name} — ${cfg.brand.name}`, text: p.tagline, url };
+    if (navigator.share) { navigator.share(data).catch(() => {}); return; }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => toast('Link copied to clipboard')).catch(() => toast(url));
+    } else { toast(url); }
   }
 
   /* ====================================================================
@@ -298,6 +389,45 @@
           <span><span class="testimonial__name">${esc(t.name)}</span><br><span class="testimonial__role">${esc(t.role)}</span></span>
         </figcaption>
       </figure>`).join('');
+  }
+
+  function renderResources() {
+    const section = $('#resources');
+    const data = cfg.resources;
+    if (!section) return;
+    if (!data || !data.posts || !data.posts.length) { section.remove(); return; }
+    $('#resources-eyebrow').textContent = data.eyebrow || 'Resources';
+    $('#resources-title').textContent = data.title || 'From our blog';
+    $('#resources-lead').textContent = data.lead || '';
+    $('#resources-mount').innerHTML = data.posts.map((post, i) => `
+      <article class="card card--interactive resource-card" data-reveal data-reveal-delay="${i % 3}">
+        <div class="resource-card__media" style="background:${esc(post.color || 'var(--brand)')}">
+          ${icon(post.icon || 'article')}
+          <span class="resource-card__cat">${esc(post.category || 'Guide')}</span>
+        </div>
+        <div class="resource-card__body">
+          <h3 class="resource-card__title">${esc(post.title)}</h3>
+          <p class="resource-card__excerpt">${esc(post.excerpt)}</p>
+          <div class="resource-card__meta">
+            <span>${icon('clock')} ${esc(post.readTime || '5 min read')}</span>
+            <span class="resource-card__link">Read more ${icon('arrowRight')}</span>
+          </div>
+        </div>
+      </article>`).join('');
+  }
+
+  function renderRecentlyViewed() {
+    const section = $('#recently-viewed');
+    if (!section) return;
+    const items = recent.ids.map((id) => PRODUCTS.find((p) => p.id === id)).filter(Boolean).slice(0, 6);
+    if (items.length < 2) { section.hidden = true; return; }
+    section.hidden = false;
+    $('#recent-mount').innerHTML = items.map((p) => `
+      <button class="recent-card" data-product="${esc(p.id)}" title="${esc(p.name)}">
+        <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+        <span class="recent-card__name">${esc(p.name)}</span>
+        <span class="recent-card__price">${money(p.price)}</span>
+      </button>`).join('');
   }
 
   function renderFaq() {
@@ -560,7 +690,10 @@
       <div class="compare-wrap">
         <div class="section-head" style="margin-bottom:1rem">
           <span class="eyebrow">${icon('scale')} Side by side</span>
-          <h2 class="section-title" style="font-size:var(--fs-2xl)">Compare ${items.length} products</h2>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+            <h2 class="section-title" style="font-size:var(--fs-2xl)">Compare ${items.length} products</h2>
+            <button class="btn btn--secondary btn--sm no-print" id="compare-print">${icon('print')} Print / PDF</button>
+          </div>
         </div>
         <table class="compare-table">
           <thead><tr><th scope="col" style="width:160px"></th>${head}</tr></thead>
@@ -574,6 +707,7 @@
         </table>
       </div>`;
     openModal('#compare-modal');
+    $('#compare-print')?.addEventListener('click', () => window.print());
   }
 
   /* ====================================================================
@@ -673,6 +807,29 @@
   }
 
   /* ====================================================================
+     HASH ROUTER — deep-linkable, shareable product views (#product/<id>)
+     ==================================================================== */
+  let suppressRoute = false;
+  function setHash(h) { suppressRoute = true; location.hash = h; setTimeout(() => { suppressRoute = false; }, 0); }
+  function clearProductHash() {
+    if (/^#product\//.test(location.hash)) {
+      suppressRoute = true;
+      history.replaceState(null, '', location.pathname + location.search);
+      setTimeout(() => { suppressRoute = false; }, 0);
+    }
+  }
+  function handleRoute() {
+    if (suppressRoute) return;
+    const m = location.hash.match(/^#product\/(.+)$/);
+    if (m) {
+      const id = decodeURIComponent(m[1]);
+      if (PRODUCTS.some((p) => p.id === id)) openProduct(id, true);
+    } else if (location.hash === '#quiz') {
+      openQuiz();
+    }
+  }
+
+  /* ====================================================================
      MODAL plumbing (focus trap + scroll lock + ESC)
      ==================================================================== */
   let lastFocused = null;
@@ -687,6 +844,7 @@
   }
   function closeModal(m) {
     m.setAttribute('aria-hidden', 'true');
+    if (m.id === 'product-modal') clearProductHash();
     if (!$$('.modal[aria-hidden="false"]').length) document.body.style.overflow = '';
     if (lastFocused) lastFocused.focus();
   }
@@ -790,13 +948,21 @@
      ==================================================================== */
   function initEvents() {
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
+      if (t.hasAttribute('data-fave')) { e.preventDefault(); e.stopPropagation(); toggleFave(t.getAttribute('data-fave')); return; }
+      if (t.hasAttribute('data-share')) { e.preventDefault(); e.stopPropagation(); shareProduct(t.getAttribute('data-share')); return; }
       if (t.hasAttribute('data-compare')) { e.preventDefault(); e.stopPropagation(); toggleCompare(t.getAttribute('data-compare')); return; }
+      if (t.hasAttribute('data-faves-only')) {
+        catalogState.favesOnly = !catalogState.favesOnly;
+        if (catalogState.favesOnly) catalogState.category = 'All';
+        renderCatalog(); return;
+      }
       if (t.hasAttribute('data-product')) { openProduct(t.getAttribute('data-product')); return; }
       if (t.hasAttribute('data-category')) {
+        catalogState.favesOnly = false;
         catalogState.category = t.getAttribute('data-category');
         $$('#catalog-filters .chip').forEach((c) => c.setAttribute('aria-pressed', c === t));
         applyCatalogFilter(); return;
@@ -893,10 +1059,13 @@
     renderCatalog();
     renderPricing();
     renderTestimonials();
+    renderResources();
     renderFaq();
     renderCtaBand();
     renderContact();
+    renderRecentlyViewed();
     renderFooter();
+    updateFaveCount();
     $('#nav-toggle').innerHTML = icon('menu');
     $('#theme-toggle').innerHTML = icon('sun') + icon('moon');
     $('#to-top').innerHTML = icon('chevronUp');
@@ -908,8 +1077,9 @@
     initCounters();
     initShortcuts();
 
-    // deep-link: #quiz opens finder
-    if (location.hash === '#quiz') openQuiz();
+    // routing: handle initial hash + future changes (deep links / share / back button)
+    window.addEventListener('hashchange', handleRoute);
+    handleRoute();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

@@ -18,6 +18,12 @@ Re-brand it for any product or industry by editing a few plain config files.
 - **Side-by-side product comparison** — select up to 4 products and compare price, rating, specs and features in a clear matrix that highlights the best value and top-rated picks.
 - **Keyboard shortcuts** — press <kbd>?</kbd> to open the finder, <kbd>/</kbd> to jump to search.
 - **SEO structured data** — JSON-LD (Organization + Product) injected automatically for rich search results.
+- **Shareable, deep-linkable products** — every product has its own URL (`#product/<id>`); opening one updates the address bar, the browser back button works, and a Share button copies the link (or uses the native share sheet on mobile).
+- **Favourites / wishlist** — a heart on every card saves products to `localStorage`, with a live count in the header and a one-tap "Favourites" filter.
+- **Recently viewed** — a rail of the products a visitor has looked at, remembered across visits.
+- **Related products** — each product view suggests relevant alternatives (same category first, then nearest price).
+- **Resources / blog section** — config-driven cards for guides and articles.
+- **Print / PDF** — a print stylesheet renders a clean comparison sheet (great for sharing a shortlist internally).
 - **Trust-building sections** — logos strip, stats band, "why us" features, pricing tiers, testimonials, FAQ, CTA band, contact form.
 - **Light & dark mode** — automatic (follows OS) with a manual toggle, remembered across visits.
 - **Fully responsive** — mobile drawer nav, fluid type, adapts from phone to widescreen.
@@ -36,7 +42,9 @@ Re-brand it for any product or industry by editing a few plain config files.
 │   │   ├── theme.css        ← 🎨 DESIGN TOKENS — start here to re-skin
 │   │   ├── base.css         ← reset, typography, helpers
 │   │   ├── components.css   ← buttons, cards, badges, modal, forms…
-│   │   └── layout.css       ← section layouts + responsive rules
+│   │   ├── layout.css       ← section layouts + responsive rules
+│   │   ├── features.css     ← theme switcher, comparison, favourites, resources
+│   │   └── print.css        ← clean print / PDF output (loaded media="print")
 │   ├── js/
 │   │   ├── config.js        ← 📝 SITE CONTENT — brand, nav, copy, contact
 │   │   ├── products.js      ← 📦 YOUR CATALOGUE — products + match attributes

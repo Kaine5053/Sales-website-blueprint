@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="assets/css/components.css">
   <link rel="stylesheet" href="assets/css/layout.css">
   <link rel="stylesheet" href="assets/css/features.css">
+  <link rel="stylesheet" href="assets/css/print.css" media="print">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🧭</text></svg>">
 </head>
 <body>
@@ -123,6 +124,18 @@
       </div>
     </section>
 
+    <!-- Resources / blog -->
+    <section class="section" id="resources">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <span class="eyebrow" id="resources-eyebrow">Resources</span>
+          <h2 class="section-title" id="resources-title">From our blog</h2>
+          <p class="section-lead" id="resources-lead"></p>
+        </div>
+        <div class="resources-grid" id="resources-mount"></div>
+      </div>
+    </section>
+
     <!-- CTA band -->
     <section class="section"><div class="container" id="cta-mount"></div></section>
 
@@ -167,6 +180,18 @@
             <p class="hint text-center">We typically reply within a few hours. No spam, ever.</p>
           </form>
         </div>
+      </div>
+    </section>
+    <!-- Recently viewed -->
+    <section class="section section--tight" id="recently-viewed" hidden>
+      <div class="container">
+        <div class="recent-head">
+          <span class="eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+            Recently viewed
+          </span>
+        </div>
+        <div class="recent-rail" id="recent-mount"></div>
       </div>
     </section>
   </main>

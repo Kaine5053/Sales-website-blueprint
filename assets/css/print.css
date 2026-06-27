@@ -1,0 +1,62 @@
+/* ============================================================================
+   PRINT — clean output for the page and, especially, the comparison table.
+   Loaded with media="print" so it never affects the on-screen experience.
+   ============================================================================ */
+
+@page { margin: 16mm; }
+
+* {
+  background: #fff !important;
+  color: #000 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Hide interactive chrome that makes no sense on paper */
+.site-header, .announce, .mobile-drawer, .theme-fab, .theme-panel,
+.compare-tray, .to-top, .skip-link, .nav__toggle, .modal__close,
+.modal__backdrop, .no-print, .hero__glow, .social-links, .footer-newsletter {
+  display: none !important;
+}
+
+/* Links: show their target so a printed page is still useful */
+a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.85em; color: #444 !important; }
+a[href^="#"]::after, a[href^="mailto"]::after, a[href^="tel"]::after { content: ""; }
+
+img { max-width: 100% !important; }
+
+/* If a modal is open (e.g. the comparison), print ONLY that and drop the page
+   behind it. :has() is well-supported in modern print engines. */
+body:has(.modal[aria-hidden="false"]) > main,
+body:has(.modal[aria-hidden="false"]) > .site-footer,
+body:has(.modal[aria-hidden="false"]) > .site-header,
+body:has(.modal[aria-hidden="false"]) > .announce {
+  display: none !important;
+}
+
+.modal[aria-hidden="false"] {
+  position: static !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  padding: 0 !important;
+}
+.modal[aria-hidden="false"] .modal__panel {
+  position: static !important;
+  transform: none !important;
+  max-height: none !important;
+  width: 100% !important;
+  border: none !important;
+  overflow: visible !important;
+}
+
+/* Comparison table: borders for legibility on paper */
+.compare-table th, .compare-table td {
+  border: 1px solid #999 !important;
+}
+.compare-table td.ct-best { background: #f0f0f0 !important; }
+.badge { border: 1px solid #999 !important; }
+
+/* Avoid awkward breaks */
+.compare-table, .pd, .card, .feature, .price-card { page-break-inside: avoid; }
+h1, h2, h3 { page-break-after: avoid; }
