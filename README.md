@@ -14,6 +14,10 @@ Re-brand it for any product or industry by editing a few plain config files.
 - **Product catalogue** — searchable, filterable grid that reads from a single data file.
 - **Product detail view** — rich modal with features, specs, ratings and CTAs.
 - **"Unsure?" guided finder** — a multi-step questionnaire that scores your catalogue and recommends the best-matched products, with a "why it matched" explanation and a match %.
+- **Industry theme presets** — a live switcher (bottom-right) with 7 ready-made skins (SaaS, Industrial, Luxury, Healthcare, Eco, Finance, Bold) that re-skin the whole site by swapping design tokens only. Pick one as your production default.
+- **Side-by-side product comparison** — select up to 4 products and compare price, rating, specs and features in a clear matrix that highlights the best value and top-rated picks.
+- **Keyboard shortcuts** — press <kbd>?</kbd> to open the finder, <kbd>/</kbd> to jump to search.
+- **SEO structured data** — JSON-LD (Organization + Product) injected automatically for rich search results.
 - **Trust-building sections** — logos strip, stats band, "why us" features, pricing tiers, testimonials, FAQ, CTA band, contact form.
 - **Light & dark mode** — automatic (follows OS) with a manual toggle, remembered across visits.
 - **Fully responsive** — mobile drawer nav, fluid type, adapts from phone to widescreen.
@@ -37,6 +41,7 @@ Re-brand it for any product or industry by editing a few plain config files.
 │   │   ├── config.js        ← 📝 SITE CONTENT — brand, nav, copy, contact
 │   │   ├── products.js      ← 📦 YOUR CATALOGUE — products + match attributes
 │   │   ├── questionnaire.js ← ❓ FINDER — questions + recommendation engine
+│   │   ├── presets.js       ← 🎨 INDUSTRY THEME PRESETS — the live switcher
 │   │   └── app.js           ← rendering & interactions (rarely needs editing)
 │   └── img/                 ← placeholder SVGs (swap for real photos)
 └── README.md
@@ -102,6 +107,30 @@ The finder is driven entirely by data — **no code changes needed** to retune i
 > the attributes consistently in both files.
 
 ---
+
+## 🎨 Industry theme presets
+
+Open the **Theme** switcher (bottom-right) to flip between 7 industry skins live.
+Each is just a set of design-token overrides in `assets/js/presets.js`:
+
+```js
+{
+  id: 'healthcare', name: 'Healthcare', desc: '…', swatch: ['#0ea5a5', '#0284c7'],
+  vars: { '--brand-h': '184', '--brand-s': '72%', '--brand-l': '38%', '--radius-base': '18px' },
+}
+```
+
+The switcher is a **showcase**. For production, pick the preset you want, paste its
+`vars` into `theme.css` as the defaults, and delete the switcher markup/script if
+you don't want users changing it. Add your own preset by copying a block and
+changing the values.
+
+## ⚖️ Product comparison
+
+Each product card has a **Compare** toggle. Selecting 2–4 products opens a
+side-by-side matrix (price, rating, specs, feature presence) that auto-highlights
+the lowest price and top-rated options. It reads straight from `products.js` —
+add a spec or feature to a product and it appears in the table automatically.
 
 ## 🔌 Going to production — wiring up the forms
 

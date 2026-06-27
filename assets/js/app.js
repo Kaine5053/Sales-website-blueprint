@@ -59,6 +59,8 @@
     linkedin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 110-4.12 2.06 2.06 0 010 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>',
     facebook: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.01 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8v8.44C19.61 23.08 24 18.09 24 12.07z"/></svg>',
     instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>',
+    palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20c1.1 0 2-.9 2-2 0-.5-.2-.95-.5-1.3-.3-.34-.5-.79-.5-1.2 0-.83.67-1.5 1.5-1.5H16a6 6 0 006-6c0-5-4.5-8-10-8z"/><circle cx="7.5" cy="10.5" r="1.2" fill="currentColor"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/><circle cx="16.5" cy="10.5" r="1.2" fill="currentColor"/></svg>',
+    scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 7h10M5 21h14M3 11l3-6 3 6a3 3 0 01-6 0zM15 11l3-6 3 6a3 3 0 01-6 0z"/></svg>',
   };
   const icon = (name) => I[name] || '';
 
@@ -181,12 +183,18 @@
      RENDER: product catalogue (with search + category filters)
      ==================================================================== */
   const catalogState = { query: '', category: 'All' };
+  const compareState = { ids: [], max: 4 };
 
   function productCardHTML(p) {
     const badges = (p.badges || []).map((b) =>
       `<span class="badge ${b.type === 'solid' ? 'badge--solid' : ''}">${esc(b.text)}</span>`).join('');
+    const isComparing = compareState.ids.includes(p.id);
     return `
       <article class="card card--interactive product-card" data-product="${esc(p.id)}" tabindex="0" role="button" aria-label="View ${esc(p.name)}">
+        <button class="compare-toggle" data-compare="${esc(p.id)}" aria-pressed="${isComparing}"
+                title="Add to comparison" aria-label="Compare ${esc(p.name)}">
+          ${icon('scale')} Compare
+        </button>
         <div class="product-card__media">
           <img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" width="320" height="220"
                onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'pd-fallback'}))">
@@ -473,6 +481,198 @@
   }
 
   /* ====================================================================
+     PRODUCT COMPARISON
+     ==================================================================== */
+  function toggleCompare(id) {
+    const i = compareState.ids.indexOf(id);
+    if (i >= 0) {
+      compareState.ids.splice(i, 1);
+    } else {
+      if (compareState.ids.length >= compareState.max) {
+        toast(`You can compare up to ${compareState.max} products at once.`);
+        return;
+      }
+      compareState.ids.push(id);
+    }
+    // reflect on any visible toggle buttons without a full re-render
+    $$('[data-compare]').forEach((b) =>
+      b.setAttribute('aria-pressed', compareState.ids.includes(b.getAttribute('data-compare'))));
+    renderCompareTray();
+  }
+
+  function renderCompareTray() {
+    const tray = $('#compare-tray');
+    const n = compareState.ids.length;
+    tray.setAttribute('data-open', n > 0);
+    $('#compare-count').textContent = `${n} selected`;
+    $('#compare-open').disabled = n < 2;
+    $('#compare-open').textContent = n < 2 ? 'Pick 2+' : `Compare (${n})`;
+    $('#compare-thumbs').innerHTML = compareState.ids.map((id) => {
+      const p = PRODUCTS.find((x) => x.id === id);
+      return p ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" title="${esc(p.name)}">` : '';
+    }).join('');
+  }
+
+  function clearCompare() {
+    compareState.ids = [];
+    $$('[data-compare]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+    renderCompareTray();
+  }
+
+  function openCompare() {
+    const items = compareState.ids.map((id) => PRODUCTS.find((x) => x.id === id)).filter(Boolean);
+    if (items.length < 2) return;
+
+    // collect the union of spec keys across selected products
+    const specKeys = [...new Set(items.flatMap((p) => Object.keys(p.specs || {})))];
+    const minPrice = Math.min(...items.map((p) => p.price));
+    const maxRating = Math.max(...items.map((p) => p.rating));
+
+    const head = items.map((p) => `
+      <th class="ct-product" scope="col">
+        <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+        <div class="ct-name">${esc(p.name)}</div>
+        <div class="product-card__cat">${esc(p.category)}</div>
+      </th>`).join('');
+
+    const priceRow = items.map((p) =>
+      `<td class="${p.price === minPrice ? 'ct-best' : ''}"><span class="ct-price">${money(p.price)}</span> <small>${esc(p.priceUnit || '')}</small>${p.price === minPrice ? ' <span class="badge badge--success">Lowest</span>' : ''}</td>`).join('');
+
+    const ratingRow = items.map((p) =>
+      `<td class="${p.rating === maxRating ? 'ct-best' : ''}"><span class="stars">${icon('star')}</span> ${esc(p.rating)} <small>(${esc(p.reviews)})</small>${p.rating === maxRating ? ' <span class="badge badge--success">Top rated</span>' : ''}</td>`).join('');
+
+    const specRows = specKeys.map((k) => `
+      <tr><th scope="row">${esc(k)}</th>
+        ${items.map((p) => `<td>${esc((p.specs && p.specs[k]) || '—')}</td>`).join('')}
+      </tr>`).join('');
+
+    // feature presence matrix (union of all features)
+    const allFeatures = [...new Set(items.flatMap((p) => p.features || []))];
+    const featureRows = allFeatures.map((f) => `
+      <tr><th scope="row">${esc(f)}</th>
+        ${items.map((p) => `<td class="text-center">${(p.features || []).includes(f) ? `<span class="ct-yes">${icon('check')}</span>` : '<span style="color:var(--text-subtle)">—</span>'}</td>`).join('')}
+      </tr>`).join('');
+
+    const ctaRow = items.map((p) =>
+      `<td class="compare-cell-cta"><a class="btn btn--primary btn--sm" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Choose</a></td>`).join('');
+
+    $('#compare-modal-content').innerHTML = `
+      <div class="compare-wrap">
+        <div class="section-head" style="margin-bottom:1rem">
+          <span class="eyebrow">${icon('scale')} Side by side</span>
+          <h2 class="section-title" style="font-size:var(--fs-2xl)">Compare ${items.length} products</h2>
+        </div>
+        <table class="compare-table">
+          <thead><tr><th scope="col" style="width:160px"></th>${head}</tr></thead>
+          <tbody>
+            <tr><th scope="row">Price</th>${priceRow}</tr>
+            <tr><th scope="row">Rating</th>${ratingRow}</tr>
+            ${specRows}
+            ${featureRows}
+            <tr><th scope="row"></th>${ctaRow}</tr>
+          </tbody>
+        </table>
+      </div>`;
+    openModal('#compare-modal');
+  }
+
+  /* ====================================================================
+     THEME PRESET SWITCHER  (industry re-skins)
+     ==================================================================== */
+  const PRESETS = window.THEME_PRESETS || [];
+
+  function applyPreset(id, persist = true) {
+    const preset = PRESETS.find((p) => p.id === id) || PRESETS[0];
+    if (!preset) return;
+    const root = document.documentElement;
+    // clear any previously-applied preset vars, then apply the new set
+    (applyPreset._applied || []).forEach((k) => root.style.removeProperty(k));
+    applyPreset._applied = Object.keys(preset.vars || {});
+    Object.entries(preset.vars || {}).forEach(([k, v]) => root.style.setProperty(k, v));
+    if (persist) localStorage.setItem('preset', id);
+    $$('#theme-presets .theme-preset').forEach((b) =>
+      b.setAttribute('aria-pressed', b.getAttribute('data-preset') === preset.id));
+  }
+
+  function renderThemeSwitcher() {
+    $('#theme-fab-icon').innerHTML = icon('palette');
+    $('#theme-panel-close').innerHTML = icon('close');
+    $('#theme-presets').innerHTML = PRESETS.map((p) => `
+      <button class="theme-preset" data-preset="${esc(p.id)}" aria-pressed="false">
+        <span class="theme-preset__swatch">${(p.swatch || []).map((c) => `<span style="background:${esc(c)}"></span>`).join('')}</span>
+        <span class="theme-preset__name">${esc(p.name)}</span>
+      </button>`).join('');
+
+    // apply preset on click
+    $('#theme-presets').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-preset]');
+      if (b) applyPreset(b.getAttribute('data-preset'));
+    });
+
+    // restore saved preset
+    const saved = localStorage.getItem('preset');
+    applyPreset(saved && PRESETS.some((p) => p.id === saved) ? saved : 'default', false);
+
+    // sync dark switch with current theme
+    const darkSwitch = $('#theme-dark-switch');
+    darkSwitch.checked = document.documentElement.getAttribute('data-theme') === 'dark';
+    darkSwitch.addEventListener('change', () => { toggleTheme(); });
+
+    // panel open/close
+    const fab = $('#theme-fab');
+    const panel = $('#theme-panel');
+    const setPanel = (open) => { panel.setAttribute('data-open', open); fab.setAttribute('aria-expanded', open); };
+    fab.addEventListener('click', () => setPanel(panel.getAttribute('data-open') !== 'true'));
+    $('#theme-panel-close').addEventListener('click', () => setPanel(false));
+    document.addEventListener('click', (e) => {
+      if (panel.getAttribute('data-open') === 'true' && !panel.contains(e.target) && !fab.contains(e.target)) setPanel(false);
+    });
+  }
+
+  /* ====================================================================
+     SEO — inject JSON-LD structured data (Organization + Products)
+     ==================================================================== */
+  function injectStructuredData() {
+    const org = {
+      '@context': 'https://schema.org', '@type': 'Organization',
+      name: cfg.brand.name, description: cfg.brand.tagline,
+      contactPoint: { '@type': 'ContactPoint', email: cfg.contact.email, telephone: cfg.contact.phone, contactType: 'sales' },
+    };
+    const itemList = {
+      '@context': 'https://schema.org', '@type': 'ItemList',
+      itemListElement: PRODUCTS.map((p, i) => ({
+        '@type': 'ListItem', position: i + 1,
+        item: {
+          '@type': 'Product', name: p.name, description: p.description, category: p.category,
+          offers: { '@type': 'Offer', price: p.price, priceCurrency: 'GBP', availability: 'https://schema.org/InStock' },
+          aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.reviews },
+        },
+      })),
+    };
+    [org, itemList].forEach((data) => {
+      const s = document.createElement('script');
+      s.type = 'application/ld+json';
+      s.textContent = JSON.stringify(data);
+      document.head.appendChild(s);
+    });
+  }
+
+  /* ====================================================================
+     Keyboard shortcuts: "?" opens finder, "/" focuses search
+     ==================================================================== */
+  function initShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      if (typing) return;
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); openQuiz(); }
+      else if (e.key === '/') {
+        const s = $('#catalog-search');
+        if (s) { e.preventDefault(); s.scrollIntoView({ block: 'center', behavior: 'smooth' }); s.focus(); }
+      }
+    });
+  }
+
+  /* ====================================================================
      MODAL plumbing (focus trap + scroll lock + ESC)
      ==================================================================== */
   let lastFocused = null;
@@ -590,10 +790,11 @@
      ==================================================================== */
   function initEvents() {
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
+      if (t.hasAttribute('data-compare')) { e.preventDefault(); e.stopPropagation(); toggleCompare(t.getAttribute('data-compare')); return; }
       if (t.hasAttribute('data-product')) { openProduct(t.getAttribute('data-product')); return; }
       if (t.hasAttribute('data-category')) {
         catalogState.category = t.getAttribute('data-category');
@@ -657,6 +858,10 @@
 
     // back to top
     $('#to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    // compare tray
+    $('#compare-open')?.addEventListener('click', openCompare);
+    $('#compare-clear')?.addEventListener('click', clearCompare);
   }
 
   function toggleDrawer() {
@@ -695,9 +900,13 @@
     $('#nav-toggle').innerHTML = icon('menu');
     $('#theme-toggle').innerHTML = icon('sun') + icon('moon');
     $('#to-top').innerHTML = icon('chevronUp');
+    renderThemeSwitcher();
+    renderCompareTray();
+    injectStructuredData();
     initEvents();
     initScroll();
     initCounters();
+    initShortcuts();
 
     // deep-link: #quiz opens finder
     if (location.hash === '#quiz') openQuiz();

@@ -104,6 +104,7 @@ p { text-wrap: pretty; }
   text-transform: uppercase;
   color: var(--brand);
 }
+.eyebrow svg { width: 1.1em; height: 1.1em; flex-shrink: 0; }
 .section-title {
   font-size: var(--fs-3xl);
   letter-spacing: var(--tracking-tight);

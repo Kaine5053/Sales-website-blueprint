@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/components.css">
   <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/features.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🧭</text></svg>">
 </head>
 <body>
@@ -176,6 +177,31 @@
   <!-- Back to top -->
   <button class="to-top" id="to-top" aria-label="Back to top" type="button"></button>
 
+  <!-- Theme preset switcher (showcase: pick ONE for production) -->
+  <button class="theme-fab" id="theme-fab" type="button" aria-expanded="false" aria-controls="theme-panel">
+    <span id="theme-fab-icon"></span><span>Theme</span>
+  </button>
+  <div class="theme-panel" id="theme-panel" data-open="false" role="dialog" aria-label="Theme presets">
+    <div class="theme-panel__head">
+      <span class="theme-panel__title">Industry presets</span>
+      <button class="modal__close" style="position:static;width:32px;height:32px" id="theme-panel-close" aria-label="Close"></button>
+    </div>
+    <p class="theme-panel__hint">Swap the whole look instantly — only design tokens change. Pick one as your production default.</p>
+    <div class="theme-presets" id="theme-presets" role="group" aria-label="Choose an industry preset"></div>
+    <div class="theme-panel__row">
+      <span>Dark mode</span>
+      <label class="switch"><input type="checkbox" id="theme-dark-switch" aria-label="Toggle dark mode"><span class="switch__track"></span></label>
+    </div>
+  </div>
+
+  <!-- Compare tray -->
+  <div class="compare-tray" id="compare-tray" data-open="false" role="region" aria-label="Product comparison">
+    <span class="compare-tray__count" id="compare-count">0 selected</span>
+    <div class="compare-tray__thumbs" id="compare-thumbs"></div>
+    <button class="btn btn--primary btn--sm" id="compare-open">Compare</button>
+    <button class="compare-tray__clear" id="compare-clear">Clear</button>
+  </div>
+
   <!-- ============ MODALS ============ -->
   <div class="modal" id="product-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Product details">
     <div class="modal__backdrop" data-modal-close></div>
@@ -193,6 +219,14 @@
     </div>
   </div>
 
+  <div class="modal" id="compare-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Compare products">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__panel modal__panel--wide">
+      <button class="modal__close" aria-label="Close comparison" data-modal-close></button>
+      <div id="compare-modal-content"></div>
+    </div>
+  </div>
+
   <!-- Toasts -->
   <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
 
@@ -200,6 +234,7 @@
   <script src="assets/js/config.js"></script>
   <script src="assets/js/products.js"></script>
   <script src="assets/js/questionnaire.js"></script>
+  <script src="assets/js/presets.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>
