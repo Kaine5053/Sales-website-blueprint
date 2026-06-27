@@ -162,6 +162,13 @@
             <div class="contact-info" id="contact-info"></div>
           </div>
           <form class="card" id="contact-form" style="padding:2rem;display:flex;flex-direction:column;gap:1.25rem" novalidate>
+            <div class="quote-basket" id="quote-basket" hidden>
+              <div class="quote-basket__head">
+                <strong>Your selection</strong>
+                <button type="button" class="quote-basket__clear" id="quote-clear">Clear</button>
+              </div>
+              <ul class="quote-basket__list" id="quote-list" role="list"></ul>
+            </div>
             <div class="form-row">
               <div class="field"><label for="cf-name">Name</label><input class="input" id="cf-name" name="name" required placeholder="Jane Doe"></div>
               <div class="field"><label for="cf-email">Email</label><input class="input" id="cf-email" name="email" type="email" required placeholder="jane@company.com"></div>
@@ -254,6 +261,18 @@
 
   <!-- Toasts -->
   <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Cookie consent -->
+  <div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent" aria-live="polite" hidden>
+    <p class="cookie-banner__text" id="cookie-text"></p>
+    <div class="cookie-banner__actions">
+      <button class="btn btn--ghost btn--sm" id="cookie-decline" type="button"></button>
+      <button class="btn btn--primary btn--sm" id="cookie-accept" type="button"></button>
+    </div>
+  </div>
+
+  <!-- Screen-reader live region for route/state announcements -->
+  <div class="sr-only" id="sr-live" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Scripts (data first, then app) -->
   <script src="assets/js/config.js"></script>

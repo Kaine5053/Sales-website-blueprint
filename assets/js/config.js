@@ -133,6 +133,23 @@ window.SITE_CONFIG = {
     secondaryCta: { label: 'Talk to us', href: '#contact' },
   },
 
+  /* ---- Cookie consent (set show:false to disable the banner) ---- */
+  cookies: {
+    show: true,
+    message: 'We use cookies to improve your experience and analyse traffic. You can accept or decline non-essential cookies.',
+    acceptLabel: 'Accept all',
+    declineLabel: 'Decline',
+    policyLabel: 'Cookie policy',
+    policyHref: '#',
+  },
+
+  /* ---- Analytics (loads ONLY after cookie consent). Leave id blank to keep
+     it as a no-op stub you can wire to GA4, Plausible, Fathom, etc. ---- */
+  analytics: {
+    provider: 'stub',   /* 'stub' | 'ga4' | 'plausible' */
+    id: '',             /* e.g. 'G-XXXXXXX' for GA4 */
+  },
+
   /* ---- Contact details ---- */
   contact: {
     heading: 'Let’s talk',

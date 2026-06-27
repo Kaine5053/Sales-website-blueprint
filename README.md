@@ -24,6 +24,9 @@ Re-brand it for any product or industry by editing a few plain config files.
 - **Related products** — each product view suggests relevant alternatives (same category first, then nearest price).
 - **Resources / blog section** — config-driven cards for guides and articles.
 - **Print / PDF** — a print stylesheet renders a clean comparison sheet (great for sharing a shortlist internally).
+- **Quote basket** — "Request this product" / "Choose" collects items into a *Your selection* panel on the contact form, auto-filling the subject and message so a buyer can request a quote for several products at once.
+- **Cookie consent + analytics hook** — a configurable consent banner; analytics (GA4 / Plausible / no-op stub) load **only after** the visitor accepts. A single `track()` helper records events (add-to-quote, lead submit, newsletter) so you can wire any provider in one place.
+- **Accessibility hardening** — modal focus-trap (Tab stays inside, focus returns on close), polite screen-reader announcements for dialogs and finder steps, full keyboard operation and reduced-motion support.
 - **Trust-building sections** — logos strip, stats band, "why us" features, pricing tiers, testimonials, FAQ, CTA band, contact form.
 - **Light & dark mode** — automatic (follows OS) with a manual toggle, remembered across visits.
 - **Fully responsive** — mobile drawer nav, fluid type, adapts from phone to widescreen.
@@ -146,8 +149,12 @@ The contact and newsletter forms are front-end only (they show a success toast).
 To make them real, point them at your backend or a form service (Formspree,
 Basin, Netlify Forms, your own API) inside `app.js` → `initEvents()`.
 
+**Analytics** is already wired to a single `track()` helper in `app.js` and gated
+behind cookie consent. Set `analytics.provider` and `analytics.id` in `config.js`
+to `'ga4'` (with a `G-XXXX` id) or `'plausible'` (with your domain); leave it as
+`'stub'` to keep it a no-op that still logs to `window.dataLayer`.
+
 Suggested next integrations:
-- Analytics (GA4, Plausible, Fathom)
 - A real product/CMS backend or headless commerce
 - Live chat / support widget
 - Payment / checkout flow

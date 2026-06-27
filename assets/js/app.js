@@ -553,6 +553,7 @@
           </button>
         </div>
       </div>`;
+    announce(`Question ${quiz.step + 1} of ${total}. ${q.question}`);
   }
 
   function renderQuizResult() {
@@ -833,22 +834,159 @@
      MODAL plumbing (focus trap + scroll lock + ESC)
      ==================================================================== */
   let lastFocused = null;
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
   function openModal(sel) {
     const m = $(sel);
     if (!m) return;
     lastFocused = document.activeElement;
     m.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    const focusable = m.querySelector('button, a, input, [tabindex]');
+    const focusable = m.querySelector(FOCUSABLE);
     if (focusable) setTimeout(() => focusable.focus(), 50);
+    m._trap = trapFocus(m);
+    announce((m.getAttribute('aria-label') || 'Dialog') + ' opened');
   }
   function closeModal(m) {
     m.setAttribute('aria-hidden', 'true');
+    if (m._trap) { m._trap(); m._trap = null; }
     if (m.id === 'product-modal') clearProductHash();
     if (!$$('.modal[aria-hidden="false"]').length) document.body.style.overflow = '';
-    if (lastFocused) lastFocused.focus();
+    if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
   }
   function closeAllModals() { $$('.modal[aria-hidden="false"]').forEach(closeModal); }
+
+  /* Keep Tab focus inside the modal while it's open; returns a cleanup fn. */
+  function trapFocus(m) {
+    const onKey = (e) => {
+      if (e.key !== 'Tab') return;
+      const items = $$(FOCUSABLE, m).filter((n) => n.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    m.addEventListener('keydown', onKey);
+    return () => m.removeEventListener('keydown', onKey);
+  }
+
+  /* Polite screen-reader announcement */
+  function announce(msg) {
+    const live = $('#sr-live');
+    if (!live) return;
+    live.textContent = '';
+    setTimeout(() => { live.textContent = msg; }, 30);
+  }
+
+  /* ====================================================================
+     QUOTE BASKET — collect products into a pre-filled quote request
+     ==================================================================== */
+  const quote = { ids: store.get('quote', []) };
+
+  function addToQuote(id) {
+    if (!PRODUCTS.some((p) => p.id === id)) return;
+    if (!quote.ids.includes(id)) {
+      quote.ids.push(id);
+      store.set('quote', quote.ids);
+      const p = PRODUCTS.find((x) => x.id === id);
+      toast(`${p.name} added to your quote request`);
+      track('add_to_quote', { id });
+    }
+    renderQuote(true);
+  }
+  function removeFromQuote(id) {
+    quote.ids = quote.ids.filter((x) => x !== id);
+    store.set('quote', quote.ids);
+    renderQuote();
+  }
+  function clearQuote() { quote.ids = []; store.set('quote', []); renderQuote(); }
+
+  function renderQuote(prefill) {
+    const basket = $('#quote-basket');
+    const list = $('#quote-list');
+    if (!basket || !list) return;
+    const items = quote.ids.map((id) => PRODUCTS.find((p) => p.id === id)).filter(Boolean);
+    basket.hidden = items.length === 0;
+    list.innerHTML = items.map((p) => `
+      <li class="quote-chip">
+        <img src="${esc(p.image)}" alt="" onerror="this.style.visibility='hidden'">
+        <span class="quote-chip__name">${esc(p.name)}</span>
+        <span class="quote-chip__price">${money(p.price)}</span>
+        <button type="button" class="quote-chip__remove" data-quote-remove="${esc(p.id)}" aria-label="Remove ${esc(p.name)} from quote">${icon('close')}</button>
+      </li>`).join('');
+
+    // keep the message + subject in sync with the selection
+    const msg = $('#cf-message');
+    const subject = $('#cf-subject');
+    if (items.length) {
+      const names = items.map((p) => `${p.name} (${money(p.price)})`).join(', ');
+      const line = `I'd like a quote for: ${names}.`;
+      if (msg && (!msg.value || msg.dataset.auto === '1')) { msg.value = line; msg.dataset.auto = '1'; }
+      if (subject) subject.value = 'A custom quote';
+    } else if (msg && msg.dataset.auto === '1') {
+      msg.value = ''; delete msg.dataset.auto;
+    }
+
+    if (prefill) {
+      const contact = $('#contact');
+      if (contact) contact.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  /* ====================================================================
+     COOKIE CONSENT + ANALYTICS (analytics loads only after consent)
+     ==================================================================== */
+  function track(event, data) {
+    // central analytics hook — safe no-op until consent + provider configured
+    if (window.__consent !== 'accepted') return;
+    if (typeof window.gtag === 'function') window.gtag('event', event, data || {});
+    (window.dataLayer = window.dataLayer || []).push({ event, ...data });
+  }
+
+  function initAnalytics() {
+    const a = cfg.analytics || {};
+    window.__consent = 'accepted';
+    if (a.provider === 'ga4' && a.id) {
+      const s = document.createElement('script');
+      s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(a.id);
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date()); window.gtag('config', a.id);
+    } else if (a.provider === 'plausible' && a.id) {
+      const s = document.createElement('script');
+      s.defer = true; s.dataset.domain = a.id; s.src = 'https://plausible.io/js/script.js';
+      document.head.appendChild(s);
+    }
+    // 'stub' (default): no external script; track() still records to dataLayer.
+  }
+
+  function initCookies() {
+    const c = cfg.cookies;
+    const banner = $('#cookie-banner');
+    if (!c || !c.show || !banner) { banner?.remove(); maybeInitAnalyticsFromStored(); return; }
+    const choice = localStorage.getItem('cookie-consent');
+    if (choice === 'accepted') { window.__consent = 'accepted'; initAnalytics(); return; }
+    if (choice === 'declined') { window.__consent = 'declined'; return; }
+
+    $('#cookie-text').innerHTML = `${esc(c.message)} ${c.policyLabel ? `<a href="${esc(c.policyHref)}" style="text-decoration:underline">${esc(c.policyLabel)}</a>` : ''}`;
+    $('#cookie-accept').textContent = c.acceptLabel;
+    $('#cookie-decline').textContent = c.declineLabel;
+    banner.hidden = false;
+    document.body.classList.add('has-cookie');
+    const decide = (val) => {
+      localStorage.setItem('cookie-consent', val);
+      window.__consent = val;
+      banner.hidden = true;
+      document.body.classList.remove('has-cookie');
+      if (val === 'accepted') initAnalytics();
+    };
+    $('#cookie-accept').addEventListener('click', () => decide('accepted'));
+    $('#cookie-decline').addEventListener('click', () => decide('declined'));
+  }
+  function maybeInitAnalyticsFromStored() {
+    if (localStorage.getItem('cookie-consent') === 'accepted') { window.__consent = 'accepted'; initAnalytics(); }
+  }
 
   /* ====================================================================
      THEME toggle
@@ -948,10 +1086,12 @@
      ==================================================================== */
   function initEvents() {
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product-request], [data-quote-remove], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
+      if (t.hasAttribute('data-product-request')) { addToQuote(t.getAttribute('data-product-request')); /* fall through to close-modal below */ }
+      if (t.hasAttribute('data-quote-remove')) { e.preventDefault(); removeFromQuote(t.getAttribute('data-quote-remove')); return; }
       if (t.hasAttribute('data-fave')) { e.preventDefault(); e.stopPropagation(); toggleFave(t.getAttribute('data-fave')); return; }
       if (t.hasAttribute('data-share')) { e.preventDefault(); e.stopPropagation(); shareProduct(t.getAttribute('data-share')); return; }
       if (t.hasAttribute('data-compare')) { e.preventDefault(); e.stopPropagation(); toggleCompare(t.getAttribute('data-compare')); return; }
@@ -1015,12 +1155,17 @@
     // contact + newsletter forms (demo: no backend)
     $('#contact-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
+      track('lead_submit', { products: quote.ids.slice() });
       e.target.reset();
+      clearQuote();
       toast('Thanks! We’ll be in touch shortly.');
     });
     $('#newsletter-form')?.addEventListener('submit', (e) => {
-      e.preventDefault(); e.target.reset(); toast('You’re subscribed — welcome aboard!');
+      e.preventDefault(); e.target.reset(); track('newsletter_signup'); toast('You’re subscribed — welcome aboard!');
     });
+
+    // quote basket clear
+    $('#quote-clear')?.addEventListener('click', clearQuote);
 
     // back to top
     $('#to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -1071,11 +1216,13 @@
     $('#to-top').innerHTML = icon('chevronUp');
     renderThemeSwitcher();
     renderCompareTray();
+    renderQuote();
     injectStructuredData();
     initEvents();
     initScroll();
     initCounters();
     initShortcuts();
+    initCookies();
 
     // routing: handle initial hash + future changes (deep links / share / back button)
     window.addEventListener('hashchange', handleRoute);
