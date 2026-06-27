@@ -208,7 +208,7 @@
   /* ====================================================================
      RENDER: product catalogue (with search + category filters)
      ==================================================================== */
-  const catalogState = { query: '', category: 'All', favesOnly: false };
+  const catalogState = { query: '', category: 'All', favesOnly: false, sort: 'featured' };
   const compareState = { ids: [], max: 4 };
 
   /* Safe localStorage access — never throws (private mode / disabled storage). */
@@ -304,6 +304,25 @@
       const inFaves = !catalogState.favesOnly || isFave(p.id);
       return inCat && inSearch && inFaves;
     });
+
+    // sort (featured keeps the authored order in products.js)
+    const sorters = {
+      'price-asc':  (a, b) => a.price - b.price,
+      'price-desc': (a, b) => b.price - a.price,
+      'rating':     (a, b) => b.rating - a.rating || (b.reviews || 0) - (a.reviews || 0),
+      'reviews':    (a, b) => (b.reviews || 0) - (a.reviews || 0),
+    };
+    if (sorters[catalogState.sort]) list.sort(sorters[catalogState.sort]);
+
+    const countEl = $('#catalog-count');
+    if (countEl) {
+      const n = list.length;
+      countEl.textContent = `${n} product${n === 1 ? '' : 's'}` +
+        (catalogState.category !== 'All' && !catalogState.favesOnly ? ` in ${catalogState.category}` : '') +
+        (catalogState.favesOnly ? ' in your favourites' : '') +
+        (catalogState.query.trim() ? ` matching “${catalogState.query.trim()}”` : '');
+    }
+
     const grid = $('#product-grid');
     if (list.length === 0) {
       const favesEmpty = catalogState.favesOnly && faves.ids.length === 0;
@@ -1265,6 +1284,12 @@
         to = setTimeout(() => { catalogState.query = e.target.value; applyCatalogFilter(); }, 140);
       });
     }
+
+    // sort
+    $('#catalog-sort')?.addEventListener('change', (e) => {
+      catalogState.sort = e.target.value;
+      applyCatalogFilter();
+    });
 
     // contact + newsletter forms (demo: no backend)
     $('#contact-form')?.addEventListener('submit', (e) => {

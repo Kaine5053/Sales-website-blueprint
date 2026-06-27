@@ -11,7 +11,7 @@ Re-brand it for any product or industry by editing a few plain config files.
 ## ✨ What's included
 
 - **Polished, modern landing page** — sticky header with mega-menu, gradient hero with floating proof cards, animated stat counters, scroll-reveal animations.
-- **Product catalogue** — searchable, filterable grid that reads from a single data file.
+- **Product catalogue** — searchable, filterable, **sortable** grid (price, rating, most-reviewed) with a live results count, reading from a single data file.
 - **Product detail view** — rich modal with features, specs, ratings and CTAs.
 - **"Unsure?" guided finder** — a multi-step questionnaire that scores your catalogue and recommends the best-matched products, with a "why it matched" explanation and a match %.
 - **Industry theme presets** — a live switcher (bottom-right) with 7 ready-made skins (SaaS, Industrial, Luxury, Healthcare, Eco, Finance, Bold) that re-skin the whole site by swapping design tokens only. Pick one as your production default.

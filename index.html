@@ -79,8 +79,19 @@
             <input class="input" id="catalog-search" type="search" placeholder="Search products…" aria-label="Search products">
           </div>
           <div class="filter-chips" id="catalog-filters" role="group" aria-label="Filter by category"></div>
+          <label class="catalog__sort">
+            <span class="sr-only">Sort products</span>
+            <select class="select" id="catalog-sort" aria-label="Sort products">
+              <option value="featured">Sort: Featured</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="rating">Top rated</option>
+              <option value="reviews">Most reviewed</option>
+            </select>
+          </label>
           <button class="btn btn--secondary" data-action="open-quiz">Help me choose</button>
         </div>
+        <p class="catalog__count" id="catalog-count" aria-live="polite"></p>
         <div class="product-grid" id="product-grid"></div>
       </div>
     </section>
