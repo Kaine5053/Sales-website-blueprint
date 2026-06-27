@@ -18,6 +18,22 @@
   const CUR = (cfg && cfg.currency) || { symbol: '£', code: 'GBP', locale: 'en-GB' };
   const money = (n) => typeof n === 'number' ? CUR.symbol + n.toLocaleString(CUR.locale) : esc(n);
 
+  /* ---- commerce helpers (sale price + stock) ---- */
+  const discountPct = (p) => (p.compareAtPrice && p.compareAtPrice > p.price)
+    ? Math.round((1 - p.price / p.compareAtPrice) * 100) : 0;
+  const STOCK = {
+    in:  { label: 'In stock', cls: 'stock--in' },
+    low: { label: 'Low stock', cls: 'stock--low' },
+    out: { label: 'Sold out', cls: 'stock--out' },
+  };
+  const stockInfo = (p) => STOCK[p.stock] || STOCK.in;
+  // price block with optional strike-through original + "Save X%"
+  const priceHTML = (p, unit) => {
+    const off = discountPct(p);
+    return `<span class="price">${money(p.price)}${unit ? ` <small>${esc(p.priceUnit || '')}</small>` : ''}</span>` +
+      (off ? ` <s class="price-was">${money(p.compareAtPrice)}</s> <span class="badge badge--success">Save ${off}%</span>` : '');
+  };
+
   /* ---- Icon library (inline SVG, currentColor) ------------------------- */
   const I = {
     star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
@@ -230,8 +246,11 @@
   const cssEsc = (s) => String(s).replace(/"/g, '\\"');
 
   function productCardHTML(p) {
-    const badges = (p.badges || []).map((b) =>
+    const off = discountPct(p);
+    const badges = (off ? `<span class="badge badge--sale">Sale −${off}%</span>` : '') +
+      (p.badges || []).map((b) =>
       `<span class="badge ${b.type === 'solid' ? 'badge--solid' : ''}">${esc(b.text)}</span>`).join('');
+    const st = stockInfo(p);
     const isComparing = compareState.ids.includes(p.id);
     return `
       <article class="card card--interactive product-card" data-product="${esc(p.id)}" tabindex="0" role="button" aria-label="View ${esc(p.name)}">
@@ -253,9 +272,10 @@
           <h3 class="product-card__title">${esc(p.name)}</h3>
           <p class="product-card__desc">${esc(p.tagline)}</p>
           <div class="product-card__foot">
-            <span class="product-card__price">${money(p.price)} <small>${esc(p.priceUnit || '')}</small></span>
+            <span class="product-card__price">${priceHTML(p, true)}</span>
             <span class="stars" title="${esc(p.rating)} out of 5">${icon('star')}<span style="font-size:.8rem;color:var(--text-muted);font-weight:600">${esc(p.rating)}</span></span>
           </div>
+          <span class="stock-badge ${st.cls}"><span class="stock-dot"></span>${esc(st.label)}</span>
         </div>
       </article>`;
   }
@@ -336,11 +356,14 @@
           <div class="stars">${icon('star').repeat(Math.round(p.rating))}
             <span style="color:var(--text-muted);font-size:.85rem;font-weight:600;margin-left:.25rem">${esc(p.rating)} (${esc(p.reviews)} reviews)</span></div>
           <p class="text-muted">${esc(p.description)}</p>
-          <div class="pd__price">${money(p.price)} <small>${esc(p.priceUnit || '')}</small></div>
+          <div class="pd__price">${priceHTML(p, true)}</div>
+          <span class="stock-badge ${stockInfo(p).cls}"><span class="stock-dot"></span>${esc(stockInfo(p).label)}</span>
           <ul class="pd__features" role="list">${features}</ul>
           <dl class="pd__specs">${specs}</dl>
           <div class="pd__actions">
-            <a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Request this product ${icon('arrowRight')}</a>
+            ${p.stock === 'out'
+              ? `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Notify me when available ${icon('arrowRight')}</a>`
+              : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Request this product ${icon('arrowRight')}</a>`}
             <button class="btn btn--secondary" data-compare="${esc(p.id)}">Add to compare</button>
           </div>
           ${relatedHTML}
@@ -504,6 +527,16 @@
       </div>`).join('');
     const socials = (f.socials || []).map((s) =>
       `<a href="#" aria-label="${esc(s)}">${icon(s)}</a>`).join('');
+    const nl = f.newsletter;
+    const newsletterHTML = (nl && nl.enabled) ? `
+      <div class="footer-col footer-col--newsletter">
+        <h4>${esc(nl.title)}</h4>
+        <form id="newsletter-form" class="footer-newsletter" novalidate>
+          <input class="input" type="email" name="email" required aria-label="Email address" placeholder="${esc(nl.placeholder || 'you@example.com')}">
+          <button class="btn btn--primary" type="submit">${esc(nl.cta || 'Subscribe')}</button>
+        </form>
+        ${nl.note ? `<p class="hint" style="margin-top:.5rem">${esc(nl.note)}</p>` : ''}
+      </div>` : '';
     $('#footer-mount').innerHTML = `
       <div class="container">
         <div class="footer-grid">
@@ -513,6 +546,7 @@
             <div class="social-links">${socials}</div>
           </div>
           ${cols}
+          ${newsletterHTML}
         </div>
         <div class="footer-bottom">
           <span>© ${new Date().getFullYear()} ${esc(cfg.brand.name)}. All rights reserved.</span>

@@ -35,6 +35,8 @@ Re-brand it for any product or industry by editing a few plain config files.
 - **Multi-currency** — set `currency` (symbol, ISO code, locale) once in `config.js` and every price, the quote basket and the SEO data re-currency automatically (locale-aware separators).
 - **Readable resource articles** — the blog cards open an on-brand article reader with byline and full body, all from `config.js`.
 - **CI** — a GitHub Actions workflow runs the smoke test on every push/PR, so broken references never reach production.
+- **Sale & stock** — add `compareAtPrice` to a product for an automatic strike-through + "Save X%" badge, and `stock: 'in' | 'low' | 'out'` for a colour-coded stock badge (out-of-stock swaps the CTA to "Notify me").
+- **Footer newsletter** — a config-driven email capture in the footer (wired to the same `track()`/toast flow as the contact form).
 - **Trust-building sections** — logos strip, stats band, "why us" features, pricing tiers, testimonials, FAQ, CTA band, contact form.
 - **Light & dark mode** — automatic (follows OS) with a manual toggle, remembered across visits.
 - **Fully responsive** — mobile drawer nav, fluid type, adapts from phone to widescreen.

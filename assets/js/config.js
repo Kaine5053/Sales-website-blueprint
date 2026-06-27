@@ -206,6 +206,13 @@ window.SITE_CONFIG = {
   /* ---- Footer ---- */
   footer: {
     about: 'Northwind helps businesses choose, buy and deploy the right products with confidence. A blueprint you can make your own.',
+    newsletter: {
+      enabled: true,
+      title: 'Get product news & offers',
+      placeholder: 'you@company.com',
+      cta: 'Subscribe',
+      note: 'No spam. Unsubscribe anytime.',
+    },
     columns: [
       { title: 'Product', links: [ { label: 'All products', href: '#products' }, { label: 'Pricing', href: '#pricing' }, { label: 'What’s new', href: '#products' }, { label: 'Guided finder', href: '#', action: 'open-quiz' } ] },
       { title: 'Company', links: [ { label: 'About us', href: '#' }, { label: 'Careers', href: '#' }, { label: 'Blog', href: '#' }, { label: 'Contact', href: '#contact' } ] },

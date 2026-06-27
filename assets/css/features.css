@@ -379,6 +379,34 @@ body.has-cookie .to-top { bottom: calc(var(--sp-5) + 158px); }
 .article__content p { color: var(--text-muted); line-height: var(--lh-base); }
 .article__cta { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-7); padding-top: var(--sp-5); border-top: 1px solid var(--border); }
 
+/* ---- Sale pricing + stock --------------------------------------------- */
+.badge--sale { background: var(--danger); color: #fff; border-color: transparent; }
+.price-was { color: var(--text-subtle); font-weight: var(--fw-normal); font-size: 0.85em; margin-left: 2px; }
+.pd__price .price-was { font-size: var(--fs-md); }
+
+.stock-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  margin-top: var(--sp-3);
+}
+.stock-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-subtle); flex-shrink: 0; }
+.stock--in   { color: var(--success); }
+.stock--in   .stock-dot { background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 22%, transparent); }
+.stock--low  { color: var(--warning); }
+.stock--low  .stock-dot { background: var(--warning); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 22%, transparent); }
+.stock--out  { color: var(--danger); }
+.stock--out  .stock-dot { background: var(--danger); }
+.pd__price + .stock-badge { font-size: var(--fs-sm); }
+
+/* ---- Footer newsletter ------------------------------------------------- */
+.footer-col--newsletter { grid-column: span 1; }
+.footer-newsletter { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); flex-wrap: wrap; }
+.footer-newsletter .input { flex: 1 1 150px; min-width: 0; }
+.footer-newsletter .btn { flex-shrink: 0; }
+@media (max-width: 1024px) { .footer-col--newsletter { grid-column: span 2; } }
+@media (max-width: 600px)  { .footer-col--newsletter { grid-column: span 1; } }
+
 /* Respect reduced motion for the new animated bits */
 @media (prefers-reduced-motion: reduce) {
   .compare-tray, .theme-panel, .theme-fab, .fave-btn[aria-pressed="true"] svg, .cookie-banner { transition: none; animation: none; }

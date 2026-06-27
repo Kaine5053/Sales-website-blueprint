@@ -8,6 +8,12 @@
    The keys (e.g. useCase, budget, experience) must match the `attr` of each
    question option in questionnaire.js. Values are arrays of tags the product
    satisfies — a product matches a chosen option when they share a tag.
+
+   Optional commerce fields (all safe to omit):
+     • compareAtPrice — original/RRP; if higher than `price`, a strike-through
+       and a "Save X%" badge are shown automatically.
+     • stock — 'in' (default) | 'low' | 'out'. Drives the stock badge and, when
+       'out', swaps the CTA to "Notify me".
    ============================================================================ */
 
 window.PRODUCTS = [
@@ -18,6 +24,8 @@ window.PRODUCTS = [
     tagline: 'The dependable all-rounder',
     description: 'A balanced, no-fuss option that covers the fundamentals brilliantly. Ideal for first-time buyers and everyday use.',
     price: 199,
+    compareAtPrice: 249,
+    stock: 'in',
     priceUnit: 'one-off',
     image: 'assets/img/product-1.svg',
     badges: [{ text: 'Best seller', type: 'solid' }],
@@ -81,6 +89,7 @@ window.PRODUCTS = [
     tagline: 'Budget-friendly starter',
     description: 'The most affordable way to get started. Lean, simple and reliable for light, occasional use.',
     price: 89,
+    stock: 'low',
     priceUnit: 'one-off',
     image: 'assets/img/product-4.svg',
     badges: [{ text: 'Great value', type: '' }],
@@ -102,6 +111,8 @@ window.PRODUCTS = [
     tagline: 'Adapts to how you work',
     description: 'A modular, flexible option that grows with you. Configure it to your exact needs and expand later.',
     price: 329,
+    compareAtPrice: 399,
+    stock: 'in',
     priceUnit: 'one-off',
     image: 'assets/img/product-5.svg',
     badges: [{ text: 'Customisable', type: '' }],
@@ -123,6 +134,7 @@ window.PRODUCTS = [
     tagline: 'Industrial-grade reliability',
     description: 'Engineered for the toughest, mission-critical workloads with redundancy and round-the-clock support.',
     price: 2499,
+    stock: 'low',
     priceUnit: 'one-off',
     image: 'assets/img/product-6.svg',
     badges: [{ text: 'Heavy duty', type: 'solid' }],
