@@ -1,0 +1,12 @@
+{
+  "name": "sales-website-blueprint",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A clean, professional, fully re-skinnable tier-1 product sales website blueprint with a guided product finder.",
+  "scripts": {
+    "start": "npx --yes serve .",
+    "serve": "npx --yes serve .",
+    "check": "node scripts/check.mjs"
+  },
+  "license": "MIT"
+}

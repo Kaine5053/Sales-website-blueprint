@@ -27,6 +27,11 @@ Re-brand it for any product or industry by editing a few plain config files.
 - **Quote basket** — "Request this product" / "Choose" collects items into a *Your selection* panel on the contact form, auto-filling the subject and message so a buyer can request a quote for several products at once.
 - **Cookie consent + analytics hook** — a configurable consent banner; analytics (GA4 / Plausible / no-op stub) load **only after** the visitor accepts. A single `track()` helper records events (add-to-quote, lead submit, newsletter) so you can wire any provider in one place.
 - **Accessibility hardening** — modal focus-trap (Tab stays inside, focus returns on close), polite screen-reader announcements for dialogs and finder steps, full keyboard operation and reduced-motion support.
+- **Installable PWA + offline** — a web manifest and service worker cache the site so it loads offline and can be installed to a home screen / desktop.
+- **SEO & crawl files** — `robots.txt`, `sitemap.xml`, web manifest, favicon/app icon, plus the JSON-LD from earlier.
+- **Styled 404 page** — an on-brand not-found page served for any unknown URL.
+- **Zero-dependency smoke test** — `npm run check` validates JS syntax, JSON, every referenced asset, the data globals and product images (great for CI or a pre-deploy gate).
+- **One-click deploy** — `vercel.json` makes it import-ready on Vercel; pushing to the connected branch auto-deploys.
 - **Trust-building sections** — logos strip, stats band, "why us" features, pricing tiers, testimonials, FAQ, CTA band, contact form.
 - **Light & dark mode** — automatic (follows OS) with a manual toggle, remembered across visits.
 - **Fully responsive** — mobile drawer nav, fluid type, adapts from phone to widescreen.
@@ -40,6 +45,13 @@ Re-brand it for any product or industry by editing a few plain config files.
 ```
 .
 ├── index.html              ← page structure & section mount points
+├── 404.html                ← styled not-found page
+├── site.webmanifest        ← PWA manifest (installable)
+├── sw.js                   ← service worker (offline cache)
+├── robots.txt · sitemap.xml← crawl/SEO files
+├── vercel.json             ← static-deploy config (clean URLs, caching)
+├── package.json            ← npm start / npm run check
+├── scripts/check.mjs       ← zero-dependency smoke test
 ├── assets/
 │   ├── css/
 │   │   ├── theme.css        ← 🎨 DESIGN TOKENS — start here to re-skin
@@ -65,10 +77,15 @@ Re-brand it for any product or industry by editing a few plain config files.
 No tooling required. Either:
 
 - **Double-click `index.html`**, or
-- Serve it locally for nicer URLs:
+- Serve it locally for nicer URLs (recommended — the service worker, manifest and
+  absolute-path 404 only work over http):
   ```bash
-  npx serve .        # or: python3 -m http.server
+  npm start          # = npx serve .   (or: python3 -m http.server)
+  npm run check      # run the zero-dependency smoke test
   ```
+
+> Tip: open via a local server, not `file://`, so the PWA features and the
+> styled 404 resolve correctly.
 
 ---
 

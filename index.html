@@ -24,7 +24,9 @@
   <link rel="stylesheet" href="assets/css/layout.css">
   <link rel="stylesheet" href="assets/css/features.css">
   <link rel="stylesheet" href="assets/css/print.css" media="print">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🧭</text></svg>">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/icon.svg">
+  <link rel="manifest" href="site.webmanifest">
 </head>
 <body>
   <a class="skip-link" href="#products">Skip to products</a>
@@ -274,11 +276,12 @@
   <!-- Screen-reader live region for route/state announcements -->
   <div class="sr-only" id="sr-live" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- Scripts (data first, then app) -->
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/products.js"></script>
-  <script src="assets/js/questionnaire.js"></script>
-  <script src="assets/js/presets.js"></script>
-  <script src="assets/js/app.js"></script>
+  <!-- Scripts (data first, then app). `defer` keeps order and avoids blocking render. -->
+  <script defer src="assets/js/config.js"></script>
+  <script defer src="assets/js/products.js"></script>
+  <script defer src="assets/js/questionnaire.js"></script>
+  <script defer src="assets/js/presets.js"></script>
+  <script defer src="assets/js/app.js"></script>
+  <script defer src="assets/js/sw-register.js"></script>
 </body>
 </html>

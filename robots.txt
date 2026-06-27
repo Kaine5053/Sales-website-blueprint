@@ -1,0 +1,6 @@
+# robots.txt — allow everything, point crawlers at the sitemap.
+# Replace the sitemap host with your real domain when you go live.
+User-agent: *
+Allow: /
+
+Sitemap: https://sales-website-blueprint.vercel.app/sitemap.xml
