@@ -67,6 +67,21 @@ const ok  = (n, c) => { results.push((c?'✓':'✗')+' '+n); if(!c) failed++; };
   await page.click('[data-product-request]'); await page.waitForTimeout(350);
   ok('quote basket has 1 chip', (await page.$$('.quote-chip')).length===1);
 
+  // variant carries into the quote: open a configured product, pick a non-default
+  // priced option, request it → the chip shows that option label.
+  await page.keyboard.press('Escape'); await page.waitForTimeout(150);
+  let configured=false;
+  for (const c of (await page.$$('.product-card'))){
+    await c.click(); await page.waitForTimeout(200);
+    if ((await page.$$('.pd-opt__choice')).length>=2){
+      await page.click('.pd-opt__choice[data-opt="0"][data-choice="1"]'); await page.waitForTimeout(150);
+      await page.click('[data-product-request]'); await page.waitForTimeout(300);
+      configured=true; break;
+    }
+    await page.keyboard.press('Escape'); await page.waitForTimeout(120);
+  }
+  ok('configured product carries option into quote', configured && (await page.$$('.quote-chip__opts')).length>=1);
+
   // resources article
   await page.evaluate(()=>document.querySelector('#resources').scrollIntoView()); await page.waitForTimeout(250);
   await (await page.$$('[data-resource]'))[0].click(); await page.waitForTimeout(300);

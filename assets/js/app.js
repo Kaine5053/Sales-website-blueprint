@@ -389,14 +389,7 @@
   }
 
   function pdComputedPrice() {
-    const p = pdState.product;
-    if (!p) return 0;
-    let total = p.price;
-    (p.options || []).forEach((group, gi) => {
-      const c = group.choices[pdState.sel[gi]];
-      if (c) total += (c.priceDelta || 0);
-    });
-    return total;
+    return pdState.product ? linePrice(pdState.product, pdState.sel) : 0;
   }
 
   function selectOption(gi, ci) {
@@ -1072,25 +1065,57 @@
   /* ====================================================================
      QUOTE BASKET — collect products into a pre-filled quote request
      ==================================================================== */
-  const quote = { ids: store.get('quote', []) };
+  // A quote line carries the product id PLUS the chosen option indices (sel),
+  // so a configured product reaches the quote with its variant + computed price.
+  function defaultSel(id) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    return ((p && p.options) || []).map(() => 0);
+  }
+  // Stable identity for a line = product + its configuration. Two distinct
+  // configurations of the same product are separate lines; identical ones dedupe.
+  function lineKey(it) { return it.id + (it.sel && it.sel.length ? '|' + it.sel.join('-') : ''); }
+  function linePrice(p, sel) {
+    let total = p.price;
+    (p.options || []).forEach((g, gi) => { const c = g.choices[(sel || [])[gi]]; if (c) total += (c.priceDelta || 0); });
+    return total;
+  }
+  function lineOptionLabels(p, sel) {
+    return (p.options || []).map((g, gi) => { const c = g.choices[(sel || [])[gi]]; return c ? c.label : null; }).filter(Boolean);
+  }
+  function persistQuote() { store.set('quote', quote.items); }
 
-  function addToQuote(id) {
-    if (!PRODUCTS.some((p) => p.id === id)) return;
-    if (!quote.ids.includes(id)) {
-      quote.ids.push(id);
-      store.set('quote', quote.ids);
-      const p = PRODUCTS.find((x) => x.id === id);
+  // Load + migrate: older builds stored a bare array of ids; map those to lines.
+  const quote = {
+    items: (store.get('quote', []) || []).map((entry) => {
+      if (typeof entry === 'string') return { id: entry, sel: defaultSel(entry) };
+      if (entry && entry.id) return { id: entry.id, sel: Array.isArray(entry.sel) ? entry.sel : defaultSel(entry.id) };
+      return null;
+    }).filter((it) => it && PRODUCTS.some((p) => p.id === it.id)),
+  };
+
+  function addToQuote(id, sel) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    if (!p) return;
+    // normalise the selection to this product's option groups (clamp stray indices)
+    const normSel = Array.isArray(sel)
+      ? (p.options || []).map((g, gi) => { const ci = sel[gi]; return (ci >= 0 && ci < g.choices.length) ? ci : 0; })
+      : defaultSel(id);
+    const item = { id, sel: normSel };
+    const key = lineKey(item);
+    if (!quote.items.some((it) => lineKey(it) === key)) {
+      quote.items.push(item);
+      persistQuote();
       toast(t('quoteAdded', { name: p.name }));
-      track('add_to_quote', { id });
+      track('add_to_quote', { id, sel: normSel });
     }
     renderQuote(true);
   }
-  function removeFromQuote(id) {
-    quote.ids = quote.ids.filter((x) => x !== id);
-    store.set('quote', quote.ids);
+  function removeFromQuote(key) {
+    quote.items = quote.items.filter((it) => lineKey(it) !== key);
+    persistQuote();
     renderQuote();
   }
-  function clearQuote() { quote.ids = []; store.set('quote', []); renderQuote(); }
+  function clearQuote() { quote.items = []; persistQuote(); renderQuote(); }
 
   // Out-of-stock "notify me": prefills the contact form without quote language.
   function notifyProduct(id) {
@@ -1113,21 +1138,27 @@
     const basket = $('#quote-basket');
     const list = $('#quote-list');
     if (!basket || !list) return;
-    const items = quote.ids.map((id) => PRODUCTS.find((p) => p.id === id)).filter(Boolean);
-    basket.hidden = items.length === 0;
-    list.innerHTML = items.map((p) => `
+    const lines = quote.items.map((it) => {
+      const p = PRODUCTS.find((x) => x.id === it.id);
+      return p ? { key: lineKey(it), p, price: linePrice(p, it.sel), opts: lineOptionLabels(p, it.sel) } : null;
+    }).filter(Boolean);
+    basket.hidden = lines.length === 0;
+    list.innerHTML = lines.map((L) => `
       <li class="quote-chip">
-        <img src="${esc(p.image)}" alt="" onerror="this.style.visibility='hidden'">
-        <span class="quote-chip__name">${esc(p.name)}</span>
-        <span class="quote-chip__price">${money(p.price)}</span>
-        <button type="button" class="quote-chip__remove" data-quote-remove="${esc(p.id)}" aria-label="Remove ${esc(p.name)} from quote">${icon('close')}</button>
+        <img src="${esc(L.p.image)}" alt="" onerror="this.style.visibility='hidden'">
+        <span class="quote-chip__text">
+          <span class="quote-chip__name">${esc(L.p.name)}</span>
+          ${L.opts.length ? `<span class="quote-chip__opts">${esc(L.opts.join(' · '))}</span>` : ''}
+        </span>
+        <span class="quote-chip__price">${money(L.price)}</span>
+        <button type="button" class="quote-chip__remove" data-quote-remove="${esc(L.key)}" aria-label="Remove ${esc(L.p.name)} from quote">${icon('close')}</button>
       </li>`).join('');
 
     // keep the message + subject in sync with the selection
     const msg = $('#cf-message');
     const subject = $('#cf-subject');
-    if (items.length) {
-      const names = items.map((p) => `${p.name} (${money(p.price)})`).join(', ');
+    if (lines.length) {
+      const names = lines.map((L) => `${L.p.name}${L.opts.length ? ' [' + L.opts.join(', ') + ']' : ''} (${money(L.price)})`).join(', ');
       const line = t('quoteFor', { items: names });
       if (msg && (!msg.value || msg.dataset.auto === '1')) { msg.value = line; msg.dataset.auto = '1'; }
       if (subject) subject.value = 'A custom quote';
@@ -1301,7 +1332,12 @@
       if (t.hasAttribute('data-opt')) { selectOption(+t.getAttribute('data-opt'), +t.getAttribute('data-choice')); return; }
       if (t.hasAttribute('data-product-notify')) { notifyProduct(t.getAttribute('data-product-notify')); /* fall through to close-modal */ }
       if (t.hasAttribute('data-resource')) { openArticle(Number(t.getAttribute('data-resource'))); return; }
-      if (t.hasAttribute('data-product-request')) { addToQuote(t.getAttribute('data-product-request')); /* fall through to close-modal below */ }
+      if (t.hasAttribute('data-product-request')) {
+        const rid = t.getAttribute('data-product-request');
+        // carry the live variant selection when the request comes from that product's open modal
+        const sel = (pdState.product && pdState.product.id === rid) ? pdState.sel.slice() : null;
+        addToQuote(rid, sel); /* fall through to close-modal below */
+      }
       if (t.hasAttribute('data-quote-remove')) { e.preventDefault(); removeFromQuote(t.getAttribute('data-quote-remove')); return; }
       if (t.hasAttribute('data-fave')) { e.preventDefault(); e.stopPropagation(); toggleFave(t.getAttribute('data-fave')); return; }
       if (t.hasAttribute('data-share')) { e.preventDefault(); e.stopPropagation(); shareProduct(t.getAttribute('data-share')); return; }
@@ -1375,7 +1411,7 @@
     // contact + newsletter forms (demo: no backend)
     $('#contact-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      track('lead_submit', { products: quote.ids.slice() });
+      track('lead_submit', { products: quote.items.map((it) => lineKey(it)) });
       e.target.reset();
       clearQuote();
       toast(t('toastContact'));

@@ -115,9 +115,10 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
 - **Forms are front-end only** — the contact form, newsletter and quote request
   show a success toast and fire a `track()` event but have no backend. Wire them
   to a form service or API in `app.js → initEvents()`.
-- **Variant options affect the displayed price only** — the selected configuration
-  is computed live in the detail modal but is NOT yet carried into the quote
-  basket. (This was the next planned iteration — see §7.)
+- **Variant options now carry into the quote** — the chosen configuration and its
+  computed price travel from the detail modal into the quote chip and the
+  prefilled contact message. Distinct configurations of the same product are
+  separate quote lines; identical ones dedupe. (Done — iteration 14.)
 - **Analytics** is a no-op stub until you set `analytics.provider`/`id` in config
   AND the visitor accepts cookies.
 - **Images are gradient SVG placeholders** in `assets/img/` — swap for real assets.
@@ -132,15 +133,15 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
 
 ## 7. Suggested next steps (in priority order)
 
-1. **Carry variant options into the quote basket** (was next on the loop). When a
-   configured product is requested, capture the chosen options + computed price in
-   the quote chip and the prefilled message. Touches `quote` state shape,
-   `addToQuote`, `renderQuote`, and the detail request button.
-2. **Wire forms to a backend** (Formspree/Basin/Netlify Forms or your API).
-3. **Real product/CMS data** + real imagery.
-4. **Pagination / "load more"** for large catalogues.
-5. **Checkout / payment** flow if this becomes transactional.
-6. Optional: self-host fonts, add more presets, more finder questions.
+1. **Wire forms to a backend** (Formspree/Basin/Netlify Forms or your API).
+2. **Real product/CMS data** + real imagery.
+3. **Pagination / "load more"** for large catalogues.
+4. **Checkout / payment** flow if this becomes transactional.
+5. Optional: self-host fonts, add more presets, more finder questions.
+
+_Done in iteration 14: variant options now carry into the quote basket — chosen
+configuration + computed price flow into the chip and prefilled message; distinct
+configs are separate lines, identical ones dedupe; old id-array quotes migrate._
 
 ---
 
