@@ -1127,8 +1127,11 @@
   function persistQuote() { store.set('quote', quote.items); }
 
   // Load + migrate: older builds stored a bare array of ids; map those to lines.
+  // Guard the type — this runs at boot, before init()'s safe() wrappers, so a
+  // malformed stored value must not throw and break the whole page.
+  const storedQuote = store.get('quote', []);
   const quote = {
-    items: (store.get('quote', []) || []).map((entry) => {
+    items: (Array.isArray(storedQuote) ? storedQuote : []).map((entry) => {
       if (typeof entry === 'string') return { id: entry, sel: defaultSel(entry) };
       if (entry && entry.id) return { id: entry.id, sel: Array.isArray(entry.sel) ? entry.sel : defaultSel(entry.id) };
       return null;
