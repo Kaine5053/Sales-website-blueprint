@@ -362,6 +362,23 @@ body.has-cookie .to-top { bottom: calc(var(--sp-5) + 158px); }
   .cookie-banner { left: var(--sp-3); right: var(--sp-3); bottom: var(--sp-3); width: auto; }
 }
 
+/* ---- Article reader (resources) --------------------------------------- */
+.article__hero {
+  height: 180px;
+  display: grid; place-items: center;
+  color: #fff;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.article__hero svg { width: 64px; height: 64px; opacity: 0.95; }
+.article__body { padding: var(--sp-7); }
+.article__title { font-size: var(--fs-2xl); margin-block: var(--sp-3) var(--sp-3); }
+.article__meta { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; font-size: var(--fs-sm); color: var(--text-subtle); margin-bottom: var(--sp-5); }
+.article__meta svg { width: 14px; height: 14px; vertical-align: -2px; }
+.article__content > * + * { margin-top: var(--sp-4); }
+.article__h { font-size: var(--fs-lg); margin-top: var(--sp-6); }
+.article__content p { color: var(--text-muted); line-height: var(--lh-base); }
+.article__cta { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-7); padding-top: var(--sp-5); border-top: 1px solid var(--border); }
+
 /* Respect reduced motion for the new animated bits */
 @media (prefers-reduced-motion: reduce) {
   .compare-tray, .theme-panel, .theme-fab, .fave-btn[aria-pressed="true"] svg, .cookie-banner { transition: none; animation: none; }

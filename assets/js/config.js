@@ -7,6 +7,11 @@
    ============================================================================ */
 
 window.SITE_CONFIG = {
+  /* ---- Currency & locale (used everywhere prices are shown) ----
+     Change these three to re-currency the whole site. `locale` controls
+     thousands separators; `code` is the ISO code used in SEO/structured data. */
+  currency: { symbol: '£', code: 'GBP', locale: 'en-GB' },
+
   /* ---- Brand identity ---- */
   brand: {
     name: 'Northwind',
@@ -119,9 +124,48 @@ window.SITE_CONFIG = {
     title: 'Guides & insights',
     lead: 'Practical advice to help you choose well and get the most from your purchase.',
     posts: [
-      { category: 'Buying guide', title: 'How to choose the right product for your needs', excerpt: 'A simple framework for weighing up budget, scale and features — without the jargon.', readTime: '6 min read', icon: 'compass', color: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
-      { category: 'Comparison', title: 'Essentials vs Professional vs Enterprise', excerpt: 'Which tier is right for you? We break down the real-world differences side by side.', readTime: '8 min read', icon: 'scale', color: 'linear-gradient(135deg,#0ea5e9,#2563eb)' },
-      { category: 'Tips', title: '5 mistakes to avoid when buying', excerpt: 'Save time and money by sidestepping the most common pitfalls our customers report.', readTime: '4 min read', icon: 'bolt', color: 'linear-gradient(135deg,#14b8a6,#0d9488)' },
+      {
+        category: 'Buying guide', title: 'How to choose the right product for your needs', excerpt: 'A simple framework for weighing up budget, scale and features — without the jargon.', readTime: '6 min read', icon: 'compass', color: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+        author: 'The Northwind team', date: 'June 2026',
+        body: [
+          { h: 'Start with the outcome, not the spec sheet' },
+          { p: 'The most common mistake is shopping by features. Instead, write down the result you want — “equip a team of ten” or “handle peak-season demand” — and work backwards. The right product is the cheapest one that comfortably delivers that outcome with a little headroom to grow.' },
+          { h: 'Three questions that settle most decisions' },
+          { p: 'Who is it for (just you, a small team, or a whole organisation)? What’s your realistic budget range? And how hands-on do you want to be — plug-and-play, or full control? Answer those honestly and the shortlist usually narrows to two or three options.' },
+          { p: 'Not sure? Our guided finder asks exactly these questions and recommends the best-matched products in under a minute — with a clear explanation of why each one fits.' },
+          { h: 'Leave room to grow' },
+          { p: 'Buying slightly above today’s needs is almost always cheaper than upgrading in six months. Check the next tier up: if it’s a modest step in price for a meaningful step in capacity or support, it’s often the smarter buy.' },
+        ],
+      },
+      {
+        category: 'Comparison', title: 'Essentials vs Professional vs Enterprise', excerpt: 'Which tier is right for you? We break down the real-world differences side by side.', readTime: '8 min read', icon: 'scale', color: 'linear-gradient(135deg,#0ea5e9,#2563eb)',
+        author: 'The Northwind team', date: 'June 2026',
+        body: [
+          { h: 'Essentials — for getting started' },
+          { p: 'Essentials covers the fundamentals brilliantly for individuals and light use. If you want something dependable that works out of the box without ongoing management, start here.' },
+          { h: 'Professional — for growing teams' },
+          { p: 'Professional adds capacity, priority support and advanced controls. It’s the sweet spot for businesses that have outgrown the basics and need reliability they can lean on.' },
+          { h: 'Enterprise — for scale and assurance' },
+          { p: 'Enterprise is built for demanding, mission-critical environments: dedicated support, the longest warranties, and custom integrations. Choose it when downtime is expensive and scale is non-negotiable.' },
+          { p: 'Still weighing it up? Use the comparison tool to put any products side by side — it highlights the lowest price and top-rated options automatically.' },
+        ],
+      },
+      {
+        category: 'Tips', title: '5 mistakes to avoid when buying', excerpt: 'Save time and money by sidestepping the most common pitfalls our customers report.', readTime: '4 min read', icon: 'bolt', color: 'linear-gradient(135deg,#14b8a6,#0d9488)',
+        author: 'The Northwind team', date: 'June 2026',
+        body: [
+          { h: '1. Buying on price alone' },
+          { p: 'The cheapest option can cost more over time if it doesn’t fit. Weigh value, not just sticker price.' },
+          { h: '2. Ignoring support' },
+          { p: 'When something goes wrong, support is what you’re really paying for. Check response times and channels before you buy.' },
+          { h: '3. Under-sizing for growth' },
+          { p: 'Plan for where you’ll be in a year, not just today. A little headroom now beats a disruptive upgrade later.' },
+          { h: '4. Skipping the warranty terms' },
+          { p: 'Know what’s covered and for how long. Extended cover is often worth it on higher-value purchases.' },
+          { h: '5. Going it alone when unsure' },
+          { p: 'If you’re not certain, ask. Our finder and specialists exist precisely to take the guesswork out of the decision.' },
+        ],
+      },
     ],
   },
 

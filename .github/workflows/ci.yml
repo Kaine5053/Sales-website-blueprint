@@ -1,0 +1,25 @@
+name: CI
+
+# Runs the zero-dependency smoke test on every push and PR so broken
+# references, syntax errors or missing assets are caught before they deploy.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run smoke test
+        run: node scripts/check.mjs

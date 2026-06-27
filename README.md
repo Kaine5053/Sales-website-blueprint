@@ -32,6 +32,9 @@ Re-brand it for any product or industry by editing a few plain config files.
 - **Styled 404 page** — an on-brand not-found page served for any unknown URL.
 - **Zero-dependency smoke test** — `npm run check` validates JS syntax, JSON, every referenced asset, the data globals and product images (great for CI or a pre-deploy gate).
 - **One-click deploy** — `vercel.json` makes it import-ready on Vercel; pushing to the connected branch auto-deploys.
+- **Multi-currency** — set `currency` (symbol, ISO code, locale) once in `config.js` and every price, the quote basket and the SEO data re-currency automatically (locale-aware separators).
+- **Readable resource articles** — the blog cards open an on-brand article reader with byline and full body, all from `config.js`.
+- **CI** — a GitHub Actions workflow runs the smoke test on every push/PR, so broken references never reach production.
 - **Trust-building sections** — logos strip, stats band, "why us" features, pricing tiers, testimonials, FAQ, CTA band, contact form.
 - **Light & dark mode** — automatic (follows OS) with a manual toggle, remembered across visits.
 - **Fully responsive** — mobile drawer nav, fluid type, adapts from phone to widescreen.
@@ -105,8 +108,9 @@ Also here: fonts (`--font-sans`, `--font-display`), corner roundness
 spacing, shadows and the dark theme.
 
 ### 2. Words, brand, navigation — `assets/js/config.js`
-Brand name & logo, announcement bar, nav links, hero copy, features,
-pricing plans, testimonials, FAQ, contact details and footer. All plain strings.
+Brand name & logo, **currency** (symbol/code/locale), announcement bar, nav links,
+hero copy, features, pricing plans, testimonials, resources/blog articles, FAQ,
+contact details, cookie consent, analytics and footer. All plain strings.
 
 ### 3. Your products — `assets/js/products.js`
 Add one object per product. Images go in `assets/img/`.

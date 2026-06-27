@@ -15,7 +15,8 @@
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const money = (n) => typeof n === 'number' ? '£' + n.toLocaleString('en-GB') : esc(n);
+  const CUR = (cfg && cfg.currency) || { symbol: '£', code: 'GBP', locale: 'en-GB' };
+  const money = (n) => typeof n === 'number' ? CUR.symbol + n.toLocaleString(CUR.locale) : esc(n);
 
   /* ---- Icon library (inline SVG, currentColor) ------------------------- */
   const I = {
@@ -400,7 +401,8 @@
     $('#resources-title').textContent = data.title || 'From our blog';
     $('#resources-lead').textContent = data.lead || '';
     $('#resources-mount').innerHTML = data.posts.map((post, i) => `
-      <article class="card card--interactive resource-card" data-reveal data-reveal-delay="${i % 3}">
+      <article class="card card--interactive resource-card" data-resource="${i}" role="button" tabindex="0"
+               aria-label="Read: ${esc(post.title)}" data-reveal data-reveal-delay="${i % 3}">
         <div class="resource-card__media" style="background:${esc(post.color || 'var(--brand)')}">
           ${icon(post.icon || 'article')}
           <span class="resource-card__cat">${esc(post.category || 'Guide')}</span>
@@ -414,6 +416,34 @@
           </div>
         </div>
       </article>`).join('');
+  }
+
+  function openArticle(index) {
+    const post = (cfg.resources && cfg.resources.posts) ? cfg.resources.posts[index] : null;
+    if (!post) return;
+    const bodyHTML = (post.body || [{ p: post.excerpt }]).map((block) =>
+      block.h ? `<h3 class="article__h">${esc(block.h)}</h3>` : `<p>${esc(block.p)}</p>`).join('');
+    $('#article-modal-content').innerHTML = `
+      <div class="article">
+        <div class="article__hero" style="background:${esc(post.color || 'var(--brand)')}">
+          ${icon(post.icon || 'article')}
+        </div>
+        <div class="article__body">
+          <span class="badge">${esc(post.category || 'Guide')}</span>
+          <h1 class="article__title">${esc(post.title)}</h1>
+          <div class="article__meta">
+            ${post.author ? `<span>${esc(post.author)}</span>` : ''}
+            ${post.date ? `<span>· ${esc(post.date)}</span>` : ''}
+            <span>· ${icon('clock')} ${esc(post.readTime || '5 min read')}</span>
+          </div>
+          <div class="article__content">${bodyHTML}</div>
+          <div class="article__cta">
+            <button class="btn btn--primary" data-action="open-quiz" data-close-modal>${icon('compass')} Help me choose</button>
+            <a class="btn btn--secondary" href="#products" data-close-modal>Browse products</a>
+          </div>
+        </div>
+      </div>`;
+    openModal('#article-modal');
   }
 
   function renderRecentlyViewed() {
@@ -779,7 +809,7 @@
         '@type': 'ListItem', position: i + 1,
         item: {
           '@type': 'Product', name: p.name, description: p.description, category: p.category,
-          offers: { '@type': 'Offer', price: p.price, priceCurrency: 'GBP', availability: 'https://schema.org/InStock' },
+          offers: { '@type': 'Offer', price: p.price, priceCurrency: CUR.code, availability: 'https://schema.org/InStock' },
           aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.reviews },
         },
       })),
@@ -1086,10 +1116,11 @@
      ==================================================================== */
   function initEvents() {
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product-request], [data-quote-remove], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-product-request], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
+      if (t.hasAttribute('data-resource')) { openArticle(Number(t.getAttribute('data-resource'))); return; }
       if (t.hasAttribute('data-product-request')) { addToQuote(t.getAttribute('data-product-request')); /* fall through to close-modal below */ }
       if (t.hasAttribute('data-quote-remove')) { e.preventDefault(); removeFromQuote(t.getAttribute('data-quote-remove')); return; }
       if (t.hasAttribute('data-fave')) { e.preventDefault(); e.stopPropagation(); toggleFave(t.getAttribute('data-fave')); return; }
@@ -1126,6 +1157,9 @@
     document.addEventListener('keydown', (e) => {
       if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-product]')) {
         e.preventDefault(); openProduct(e.target.getAttribute('data-product'));
+      }
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-resource]')) {
+        e.preventDefault(); openArticle(Number(e.target.getAttribute('data-resource')));
       }
       if (e.key === 'Escape') { closeAllModals(); closeDrawer(); }
     });
