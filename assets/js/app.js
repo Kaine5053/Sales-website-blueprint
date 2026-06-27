@@ -254,8 +254,11 @@
       `<span class="badge ${b.type === 'solid' ? 'badge--solid' : ''}">${esc(b.text)}</span>`).join('');
     const st = stockInfo(p);
     const isComparing = compareState.ids.includes(p.id);
+    // Stretched-link pattern: the article is NOT interactive; the title is a real
+    // <button> whose ::after overlay makes the whole card clickable. The fave/
+    // compare buttons sit above the overlay. No nested-interactive controls.
     return `
-      <article class="card card--interactive product-card" data-product="${esc(p.id)}" tabindex="0" role="button" aria-label="View ${esc(p.name)}">
+      <article class="card product-card">
         <button class="compare-toggle" data-compare="${esc(p.id)}" aria-pressed="${isComparing}"
                 title="Add to comparison" aria-label="Compare ${esc(p.name)}">
           ${icon('scale')} Compare
@@ -271,7 +274,9 @@
         </div>
         <div class="product-card__body">
           <span class="product-card__cat">${esc(p.category)}</span>
-          <h3 class="product-card__title">${esc(p.name)}</h3>
+          <h3 class="product-card__title">
+            <button class="product-card__trigger" data-product="${esc(p.id)}" aria-label="View ${esc(p.name)}">${esc(p.name)}</button>
+          </h3>
           <p class="product-card__desc">${esc(p.tagline)}</p>
           <div class="product-card__foot">
             <span class="product-card__price">${priceHTML(p, true)}</span>
@@ -426,14 +431,15 @@
     $('#resources-title').textContent = data.title || 'From our blog';
     $('#resources-lead').textContent = data.lead || '';
     $('#resources-mount').innerHTML = data.posts.map((post, i) => `
-      <article class="card card--interactive resource-card" data-resource="${i}" role="button" tabindex="0"
-               aria-label="Read: ${esc(post.title)}" data-reveal data-reveal-delay="${i % 3}">
+      <article class="card resource-card" data-reveal data-reveal-delay="${i % 3}">
         <div class="resource-card__media" style="background:${esc(post.color || 'var(--brand)')}">
           ${icon(post.icon || 'article')}
           <span class="resource-card__cat">${esc(post.category || 'Guide')}</span>
         </div>
         <div class="resource-card__body">
-          <h3 class="resource-card__title">${esc(post.title)}</h3>
+          <h3 class="resource-card__title">
+            <button class="resource-card__trigger" data-resource="${i}" aria-label="Read: ${esc(post.title)}">${esc(post.title)}</button>
+          </h3>
           <p class="resource-card__excerpt">${esc(post.excerpt)}</p>
           <div class="resource-card__meta">
             <span>${icon('clock')} ${esc(post.readTime || '5 min read')}</span>
@@ -523,7 +529,7 @@
     const f = cfg.footer;
     const cols = f.columns.map((col) => `
       <div class="footer-col">
-        <h4>${esc(col.title)}</h4>
+        <h3>${esc(col.title)}</h3>
         <ul role="list">${col.links.map((l) =>
           `<li><a href="${esc(l.href)}" ${l.action ? `data-action="${esc(l.action)}"` : ''}>${esc(l.label)}</a></li>`).join('')}</ul>
       </div>`).join('');
@@ -532,7 +538,7 @@
     const nl = f.newsletter;
     const newsletterHTML = (nl && nl.enabled) ? `
       <div class="footer-col footer-col--newsletter">
-        <h4>${esc(nl.title)}</h4>
+        <h3>${esc(nl.title)}</h3>
         <form id="newsletter-form" class="footer-newsletter" novalidate>
           <input class="input" type="email" name="email" required aria-label="Email address" placeholder="${esc(nl.placeholder || 'you@example.com')}">
           <button class="btn btn--primary" type="submit">${esc(nl.cta || 'Subscribe')}</button>
@@ -1230,10 +1236,12 @@
 
     // keyboard activation for card "buttons"
     document.addEventListener('keydown', (e) => {
-      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-product]')) {
+      // Only synthesize activation for non-native controls (e.g. role="button" divs).
+      // Real <button>/<a> elements handle Enter/Space themselves — don't double-fire.
+      const synth = (e.key === 'Enter' || e.key === ' ') && !e.target.matches('button, a');
+      if (synth && e.target.matches('[data-product]')) {
         e.preventDefault(); openProduct(e.target.getAttribute('data-product'));
-      }
-      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-resource]')) {
+      } else if (synth && e.target.matches('[data-resource]')) {
         e.preventDefault(); openArticle(Number(e.target.getAttribute('data-resource')));
       }
       if (e.key === 'Escape') { closeAllModals(); closeDrawer(); }

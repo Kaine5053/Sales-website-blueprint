@@ -25,6 +25,9 @@
   --brand-100:    hsl(var(--brand-h) calc(var(--brand-s) - 20%) 94%);
   --brand-tint:   hsl(var(--brand-h) calc(var(--brand-s) - 30%) 97%);
   --brand-contrast: #ffffff;   /* text colour that sits on the brand colour */
+  --brand-text: var(--brand);  /* brand colour when used as small TEXT (AA-tuned per theme) */
+  --badge-bg: var(--brand-tint);
+  --badge-fg: var(--brand-700);
 
   /* ---- Secondary / supporting accent (for gradients, highlights) */
   --accent-h: 268;
@@ -35,6 +38,9 @@
   --warning: #d97706;
   --danger:  #dc2626;
   --info:    #2563eb;
+  /* AA-contrast text variants for small status labels (badges, stock) */
+  --success-strong: #166534;
+  --warning-strong: #b45309;
 
   /* ---- Neutral ramp (UI greys). Cool-neutral by default. */
   --n-0:   #ffffff;
@@ -159,9 +165,14 @@
    don't need to know which theme is active.
    =========================================================================== */
 :root[data-theme="dark"] {
-  --brand-l: 62%;
+  --brand-l: 56%;   /* deep enough that white text on brand buttons/badges clears AA */
   --brand-tint: hsl(var(--brand-h) 30% 16%);
   --brand-100: hsl(var(--brand-h) 30% 20%);
+  --brand-text: hsl(var(--brand-h) 92% 72%);  /* lighter brand for text on dark surfaces */
+  --badge-fg: hsl(var(--brand-h) 90% 82%);    /* legible badge text on the dark tint */
+  /* lighter status text so small labels stay legible on dark surfaces */
+  --success-strong: #4ade80;
+  --warning-strong: #fbbf24;
 
   --bg:            var(--n-950);
   --bg-subtle:     var(--n-900);
