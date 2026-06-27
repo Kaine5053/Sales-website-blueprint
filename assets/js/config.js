@@ -12,6 +12,16 @@ window.SITE_CONFIG = {
      thousands separators; `code` is the ISO code used in SEO/structured data. */
   currency: { symbol: '£', code: 'GBP', locale: 'en-GB' },
 
+  /* ---- UI strings (i18n) ----
+     Every button/label the JS renders has a default in app.js (DEFAULT_UI).
+     Override any of them — or all, for another language — here. Use
+     {placeholders} for interpolation. Example (French):
+       ui: { helpMeChoose: 'Aidez-moi à choisir', favourites: 'Favoris',
+             pdRequest: 'Demander ce produit', quizNext: 'Suivant',
+             compareTitle: 'Comparer {n} produits' }
+     Leave empty to use the English defaults. */
+  ui: {},
+
   /* ---- Brand identity ---- */
   brand: {
     name: 'Northwind',

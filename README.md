@@ -33,6 +33,7 @@ Re-brand it for any product or industry by editing a few plain config files.
 - **Zero-dependency smoke test** — `npm run check` validates JS syntax, JSON, every referenced asset, the data globals and product images (great for CI or a pre-deploy gate).
 - **One-click deploy** — `vercel.json` makes it import-ready on Vercel; pushing to the connected branch auto-deploys.
 - **Multi-currency** — set `currency` (symbol, ISO code, locale) once in `config.js` and every price, the quote basket and the SEO data re-currency automatically (locale-aware separators).
+- **Internationalised UI** — every button/label the JS renders goes through a `t()` helper with English defaults; override any string (or all, for another language) via `config.ui` — no code changes. Verified with a full French override.
 - **Readable resource articles** — the blog cards open an on-brand article reader with byline and full body, all from `config.js`.
 - **CI** — a GitHub Actions workflow runs the smoke test on every push/PR, so broken references never reach production.
 - **Sale & stock** — add `compareAtPrice` to a product for an automatic strike-through + "Save X%" badge, and `stock: 'in' | 'low' | 'out'` for a colour-coded stock badge (out-of-stock swaps the CTA to "Notify me").

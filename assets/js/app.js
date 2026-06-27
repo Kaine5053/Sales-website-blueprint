@@ -18,13 +18,46 @@
   const CUR = (cfg && cfg.currency) || { symbol: '£', code: 'GBP', locale: 'en-GB' };
   const money = (n) => typeof n === 'number' ? CUR.symbol + n.toLocaleString(CUR.locale) : esc(n);
 
+  /* ---- i18n -----------------------------------------------------------------
+     Every UI string the JS renders lives here. Override any key (or all of them,
+     for another language) via SITE_CONFIG.ui in config.js — no code changes.
+     Use {placeholders} for interpolation. t() returns plain text; callers esc()
+     it as needed (most UI strings here are trusted/static). */
+  const DEFAULT_UI = {
+    helpMeChoose: 'Help me choose',
+    favourites: 'Favourites',
+    productOne: 'product', productMany: 'products',
+    countInCategory: ' in {category}', countInFaves: ' in your favourites', countMatching: ' matching “{q}”',
+    emptyTitle: 'No products found.', emptyBody: 'Try a different search or filter — or let us help you choose.',
+    favesEmptyTitle: 'No favourites yet.', favesEmptyBody: 'Tap the heart on any product to save it here.',
+    reviews: 'reviews',
+    pdRequest: 'Request this product', pdNotify: 'Notify me when available',
+    pdAddCompare: 'Add to compare', pdRelated: 'Related products',
+    compareSideBySide: 'Side by side', compareTitle: 'Compare {n} products', comparePrint: 'Print / PDF',
+    comparePrice: 'Price', compareRating: 'Rating', compareLowest: 'Lowest', compareTopRated: 'Top rated', compareChoose: 'Choose',
+    compareSelected: '{n} selected', comparePick: 'Pick 2+', compareBtn: 'Compare ({n})',
+    quizQOf: 'Question {n} of {total}', quizMulti: 'Choose all that apply',
+    quizBack: 'Back', quizNext: 'Next', quizSeeResults: 'See results', quizLetsGo: 'Let’s go', quizTopMatch: 'Top match',
+    quoteAdded: '{name} added to your quote request', quoteFor: 'I’d like a quote for: {items}.',
+    notifyMsg: 'Please let me know when {name} is back in stock.', notifyToast: 'We’ll notify you when {name} is back in stock',
+    toastContact: 'Thanks! We’ll be in touch shortly.', toastSubscribe: 'You’re subscribed — welcome aboard!',
+    toastCopied: 'Link copied to clipboard', toastCompareMax: 'You can compare up to {max} products at once.',
+    stockIn: 'In stock', stockLow: 'Low stock', stockOut: 'Sold out',
+  };
+  const UI = Object.assign({}, DEFAULT_UI, (cfg && cfg.ui) || {});
+  const t = (key, vars) => {
+    let s = UI[key] != null ? UI[key] : key;
+    if (vars) Object.keys(vars).forEach((k) => { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  };
+
   /* ---- commerce helpers (sale price + stock) ---- */
   const discountPct = (p) => (p.compareAtPrice && p.compareAtPrice > p.price)
     ? Math.round((1 - p.price / p.compareAtPrice) * 100) : 0;
   const STOCK = {
-    in:  { label: 'In stock', cls: 'stock--in' },
-    low: { label: 'Low stock', cls: 'stock--low' },
-    out: { label: 'Sold out', cls: 'stock--out' },
+    in:  { label: t('stockIn'), cls: 'stock--in' },
+    low: { label: t('stockLow'), cls: 'stock--low' },
+    out: { label: t('stockOut'), cls: 'stock--out' },
   };
   const stockInfo = (p) => STOCK[p.stock] || STOCK.in;
   // price block with optional strike-through original + "Save X%"
@@ -126,7 +159,7 @@
     // header CTA + quiz trigger + favourites indicator
     $('#header-cta').innerHTML =
       `<button class="btn btn--ghost btn--sm" data-action="open-quiz" title="Not sure what you need?">
-         ${icon('compass')}<span class="nav__cta-text">Help me choose</span>
+         ${icon('compass')}<span class="nav__cta-text">${t('helpMeChoose')}</span>
        </button>
        <a class="fave-indicator" href="#products" data-faves-only title="Your favourites" aria-label="View favourites">
          ${icon('heart')}<span class="fave-indicator__count" id="fave-count" hidden>0</span>
@@ -291,7 +324,7 @@
     const cats = ['All', ...new Set(PRODUCTS.map((p) => p.category))];
     $('#catalog-filters').innerHTML = cats.map((c) =>
       `<button class="chip" data-category="${esc(c)}" aria-pressed="${!catalogState.favesOnly && c === catalogState.category}">${esc(c)}</button>`).join('') +
-      `<button class="chip chip--fave" data-faves-only aria-pressed="${catalogState.favesOnly}" title="Show only your saved products">${icon('heart')} Favourites</button>`;
+      `<button class="chip chip--fave" data-faves-only aria-pressed="${catalogState.favesOnly}" title="Show only your saved products">${icon('heart')} ${t('favourites')}</button>`;
     applyCatalogFilter();
   }
 
@@ -317,17 +350,17 @@
     const countEl = $('#catalog-count');
     if (countEl) {
       const n = list.length;
-      countEl.textContent = `${n} product${n === 1 ? '' : 's'}` +
-        (catalogState.category !== 'All' && !catalogState.favesOnly ? ` in ${catalogState.category}` : '') +
-        (catalogState.favesOnly ? ' in your favourites' : '') +
-        (catalogState.query.trim() ? ` matching “${catalogState.query.trim()}”` : '');
+      countEl.textContent = `${n} ${n === 1 ? t('productOne') : t('productMany')}` +
+        (catalogState.category !== 'All' && !catalogState.favesOnly ? t('countInCategory', { category: catalogState.category }) : '') +
+        (catalogState.favesOnly ? t('countInFaves') : '') +
+        (catalogState.query.trim() ? t('countMatching', { q: catalogState.query.trim() }) : '');
     }
 
     const grid = $('#product-grid');
     if (list.length === 0) {
       const favesEmpty = catalogState.favesOnly && faves.ids.length === 0;
-      grid.innerHTML = `<div class="empty-state">${icon(favesEmpty ? 'heart' : 'search')}<p><strong>${favesEmpty ? 'No favourites yet.' : 'No products found.'}</strong><br>${favesEmpty ? 'Tap the heart on any product to save it here.' : 'Try a different search or filter — or let us help you choose.'}</p>
-        ${favesEmpty ? '' : `<button class="btn btn--primary" data-action="open-quiz" style="margin-top:1rem">${icon('compass')} Help me choose</button>`}</div>`;
+      grid.innerHTML = `<div class="empty-state">${icon(favesEmpty ? 'heart' : 'search')}<p><strong>${favesEmpty ? t('favesEmptyTitle') : t('emptyTitle')}</strong><br>${favesEmpty ? t('favesEmptyBody') : t('emptyBody')}</p>
+        ${favesEmpty ? '' : `<button class="btn btn--primary" data-action="open-quiz" style="margin-top:1rem">${icon('compass')} ${t('helpMeChoose')}</button>`}</div>`;
       return;
     }
     grid.innerHTML = list.map(productCardHTML).join('');
@@ -356,7 +389,7 @@
     }
     const relatedHTML = related.length ? `
       <div class="pd__related">
-        <h3 class="pd__related-title">Related products</h3>
+        <h3 class="pd__related-title">${t('pdRelated')}</h3>
         <div class="pd__related-list">
           ${related.map((r) => `
             <button class="pd-related-card" data-product="${esc(r.id)}">
@@ -380,7 +413,7 @@
           <span class="product-card__cat">${esc(p.category)}</span>
           <h2 class="pd__title">${esc(p.name)}</h2>
           <div class="stars">${icon('star').repeat(Math.round(p.rating))}
-            <span style="color:var(--text-muted);font-size:.85rem;font-weight:600;margin-left:.25rem">${esc(p.rating)} (${esc(p.reviews)} reviews)</span></div>
+            <span style="color:var(--text-muted);font-size:.85rem;font-weight:600;margin-left:.25rem">${esc(p.rating)} (${esc(p.reviews)} ${t('reviews')})</span></div>
           <p class="text-muted">${esc(p.description)}</p>
           <div class="pd__price">${priceHTML(p, true)}</div>
           <span class="stock-badge ${stockInfo(p).cls}"><span class="stock-dot"></span>${esc(stockInfo(p).label)}</span>
@@ -388,9 +421,9 @@
           <dl class="pd__specs">${specs}</dl>
           <div class="pd__actions">
             ${p.stock === 'out'
-              ? `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-notify="${esc(p.id)}">Notify me when available ${icon('arrowRight')}</a>`
-              : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Request this product ${icon('arrowRight')}</a>`}
-            <button class="btn btn--secondary" data-compare="${esc(p.id)}">Add to compare</button>
+              ? `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-notify="${esc(p.id)}">${t('pdNotify')} ${icon('arrowRight')}</a>`
+              : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">${t('pdRequest')} ${icon('arrowRight')}</a>`}
+            <button class="btn btn--secondary" data-compare="${esc(p.id)}">${t('pdAddCompare')}</button>
           </div>
           ${relatedHTML}
         </div>
@@ -407,7 +440,7 @@
     const data = { title: `${p.name} — ${cfg.brand.name}`, text: p.tagline, url };
     if (navigator.share) { navigator.share(data).catch(() => {}); return; }
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(() => toast('Link copied to clipboard')).catch(() => toast(url));
+      navigator.clipboard.writeText(url).then(() => toast(t('toastCopied'))).catch(() => toast(url));
     } else { toast(url); }
   }
 
@@ -488,7 +521,7 @@
           </div>
           <div class="article__content">${bodyHTML}</div>
           <div class="article__cta">
-            <button class="btn btn--primary" data-action="open-quiz" data-close-modal>${icon('compass')} Help me choose</button>
+            <button class="btn btn--primary" data-action="open-quiz" data-close-modal>${icon('compass')} ${t('helpMeChoose')}</button>
             <a class="btn btn--secondary" href="#products" data-close-modal>Browse products</a>
           </div>
         </div>
@@ -605,7 +638,7 @@
           <h2 class="quiz__question text-center">${esc(QUIZ.intro.title)}</h2>
           <p class="quiz__help text-center mx-auto" style="max-width:42ch">${esc(QUIZ.intro.text)}</p>
           <div class="quiz__nav" style="justify-content:center">
-            <button class="btn btn--primary btn--lg" data-quiz-next>Let’s go ${icon('arrowRight')}</button>
+            <button class="btn btn--primary btn--lg" data-quiz-next>${t('quizLetsGo')} ${icon('arrowRight')}</button>
           </div>
         </div>`;
       return;
@@ -631,20 +664,20 @@
       <div class="quiz">
         <div class="quiz__progress"><div class="quiz__progress-bar" style="width:${pct}%"></div></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-          <span class="quiz__step-count">Question ${quiz.step + 1} of ${total}</span>
-          ${q.multi ? '<span class="badge badge--neutral">Choose all that apply</span>' : ''}
+          <span class="quiz__step-count">${t('quizQOf', { n: quiz.step + 1, total })}</span>
+          ${q.multi ? `<span class="badge badge--neutral">${t('quizMulti')}</span>` : ''}
         </div>
         <h2 class="quiz__question">${esc(q.question)}</h2>
         <p class="quiz__help">${esc(q.help || '')}</p>
         <div class="quiz__options ${q.options.length > 3 ? 'quiz__options--cols' : ''}">${opts}</div>
         <div class="quiz__nav">
-          <button class="btn btn--ghost" data-quiz-back>${icon('arrowLeft')} Back</button>
+          <button class="btn btn--ghost" data-quiz-back>${icon('arrowLeft')} ${t('quizBack')}</button>
           <button class="btn btn--primary" data-quiz-next ${canAdvance ? '' : 'disabled'}>
-            ${quiz.step === total - 1 ? 'See results' : 'Next'} ${icon('arrowRight')}
+            ${quiz.step === total - 1 ? t('quizSeeResults') : t('quizNext')} ${icon('arrowRight')}
           </button>
         </div>
       </div>`;
-    announce(`Question ${quiz.step + 1} of ${total}. ${q.question}`);
+    announce(`${t('quizQOf', { n: quiz.step + 1, total })}. ${q.question}`);
   }
 
   function renderQuizResult() {
@@ -662,7 +695,7 @@
         <div class="quiz-pick" data-product="${esc(p.id)}" role="button" tabindex="0">
           <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
           <div class="quiz-pick__body">
-            ${i === 0 ? `<span class="badge badge--solid">${icon('sparkles')} Top match</span>` : ''}
+            ${i === 0 ? `<span class="badge badge--solid">${icon('sparkles')} ${t('quizTopMatch')}</span>` : ''}
             <div style="font-weight:700;margin-top:.25rem">${esc(p.name)}</div>
             <div class="text-muted" style="font-size:.85rem">${esc(p.tagline)} · ${money(p.price)}</div>
             <span class="quiz-pick__why">${esc(why)}</span>
@@ -731,7 +764,7 @@
       compareState.ids.splice(i, 1);
     } else {
       if (compareState.ids.length >= compareState.max) {
-        toast(`You can compare up to ${compareState.max} products at once.`);
+        toast(t('toastCompareMax', { max: compareState.max }));
         return;
       }
       compareState.ids.push(id);
@@ -746,9 +779,9 @@
     const tray = $('#compare-tray');
     const n = compareState.ids.length;
     tray.setAttribute('data-open', n > 0);
-    $('#compare-count').textContent = `${n} selected`;
+    $('#compare-count').textContent = t('compareSelected', { n });
     $('#compare-open').disabled = n < 2;
-    $('#compare-open').textContent = n < 2 ? 'Pick 2+' : `Compare (${n})`;
+    $('#compare-open').textContent = n < 2 ? t('comparePick') : t('compareBtn', { n });
     $('#compare-thumbs').innerHTML = compareState.ids.map((id) => {
       const p = PRODUCTS.find((x) => x.id === id);
       return p ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" title="${esc(p.name)}">` : '';
@@ -778,10 +811,10 @@
       </th>`).join('');
 
     const priceRow = items.map((p) =>
-      `<td class="${p.price === minPrice ? 'ct-best' : ''}"><span class="ct-price">${money(p.price)}</span> <small>${esc(p.priceUnit || '')}</small>${p.price === minPrice ? ' <span class="badge badge--success">Lowest</span>' : ''}</td>`).join('');
+      `<td class="${p.price === minPrice ? 'ct-best' : ''}"><span class="ct-price">${money(p.price)}</span> <small>${esc(p.priceUnit || '')}</small>${p.price === minPrice ? ` <span class="badge badge--success">${t('compareLowest')}</span>` : ''}</td>`).join('');
 
     const ratingRow = items.map((p) =>
-      `<td class="${p.rating === maxRating ? 'ct-best' : ''}"><span class="stars">${icon('star')}</span> ${esc(p.rating)} <small>(${esc(p.reviews)})</small>${p.rating === maxRating ? ' <span class="badge badge--success">Top rated</span>' : ''}</td>`).join('');
+      `<td class="${p.rating === maxRating ? 'ct-best' : ''}"><span class="stars">${icon('star')}</span> ${esc(p.rating)} <small>(${esc(p.reviews)})</small>${p.rating === maxRating ? ` <span class="badge badge--success">${t('compareTopRated')}</span>` : ''}</td>`).join('');
 
     const specRows = specKeys.map((k) => `
       <tr><th scope="row">${esc(k)}</th>
@@ -796,22 +829,22 @@
       </tr>`).join('');
 
     const ctaRow = items.map((p) =>
-      `<td class="compare-cell-cta"><a class="btn btn--primary btn--sm" href="#contact" data-close-modal data-product-request="${esc(p.id)}">Choose</a></td>`).join('');
+      `<td class="compare-cell-cta"><a class="btn btn--primary btn--sm" href="#contact" data-close-modal data-product-request="${esc(p.id)}">${t('compareChoose')}</a></td>`).join('');
 
     $('#compare-modal-content').innerHTML = `
       <div class="compare-wrap">
         <div class="section-head" style="margin-bottom:1rem">
-          <span class="eyebrow">${icon('scale')} Side by side</span>
+          <span class="eyebrow">${icon('scale')} ${t('compareSideBySide')}</span>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-            <h2 class="section-title" style="font-size:var(--fs-2xl)">Compare ${items.length} products</h2>
-            <button class="btn btn--secondary btn--sm no-print" id="compare-print">${icon('print')} Print / PDF</button>
+            <h2 class="section-title" style="font-size:var(--fs-2xl)">${t('compareTitle', { n: items.length })}</h2>
+            <button class="btn btn--secondary btn--sm no-print" id="compare-print">${icon('print')} ${t('comparePrint')}</button>
           </div>
         </div>
         <table class="compare-table">
           <thead><tr><th scope="col" style="width:160px"></th>${head}</tr></thead>
           <tbody>
-            <tr><th scope="row">Price</th>${priceRow}</tr>
-            <tr><th scope="row">Rating</th>${ratingRow}</tr>
+            <tr><th scope="row">${t('comparePrice')}</th>${priceRow}</tr>
+            <tr><th scope="row">${t('compareRating')}</th>${ratingRow}</tr>
             ${specRows}
             ${featureRows}
             <tr><th scope="row"></th>${ctaRow}</tr>
@@ -1000,7 +1033,7 @@
       quote.ids.push(id);
       store.set('quote', quote.ids);
       const p = PRODUCTS.find((x) => x.id === id);
-      toast(`${p.name} added to your quote request`);
+      toast(t('quoteAdded', { name: p.name }));
       track('add_to_quote', { id });
     }
     renderQuote(true);
@@ -1020,12 +1053,12 @@
     const subject = $('#cf-subject');
     if (subject) subject.value = 'Something else';
     if (msg && (!msg.value || msg.dataset.auto === '1')) {
-      msg.value = `Please let me know when ${p.name} is back in stock.`;
+      msg.value = t('notifyMsg', { name: p.name });
       delete msg.dataset.auto;
     }
     const contact = $('#contact');
     if (contact) contact.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    toast(`We’ll notify you when ${p.name} is back in stock`);
+    toast(t('notifyToast', { name: p.name }));
     track('notify_request', { id });
   }
 
@@ -1048,7 +1081,7 @@
     const subject = $('#cf-subject');
     if (items.length) {
       const names = items.map((p) => `${p.name} (${money(p.price)})`).join(', ');
-      const line = `I'd like a quote for: ${names}.`;
+      const line = t('quoteFor', { items: names });
       if (msg && (!msg.value || msg.dataset.auto === '1')) { msg.value = line; msg.dataset.auto = '1'; }
       if (subject) subject.value = 'A custom quote';
     } else if (msg && msg.dataset.auto === '1') {
@@ -1297,10 +1330,10 @@
       track('lead_submit', { products: quote.ids.slice() });
       e.target.reset();
       clearQuote();
-      toast('Thanks! We’ll be in touch shortly.');
+      toast(t('toastContact'));
     });
     $('#newsletter-form')?.addEventListener('submit', (e) => {
-      e.preventDefault(); e.target.reset(); track('newsletter_signup'); toast('You’re subscribed — welcome aboard!');
+      e.preventDefault(); e.target.reset(); track('newsletter_signup'); toast(t('toastSubscribe'));
     });
 
     // quote basket clear
