@@ -112,9 +112,12 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
 
 ## 6. Known limitations / caveats
 
-- **Forms are front-end only** — the contact form, newsletter and quote request
-  show a success toast and fire a `track()` event but have no backend. Wire them
-  to a form service or API in `app.js → initEvents()`.
+- **Forms are backend-ready, demo by default** — set `contact.endpoint` and/or
+  `footer.newsletter.endpoint` in `config.js` and the forms POST their fields as
+  multipart `FormData` (Formspree/Basin/Web3Forms/Netlify/your API), with a
+  busy/disabled state and retry-on-failure. Leave the endpoints `''` and they
+  stay toast-only demos. No secrets in the repo — only the endpoint URL.
+  (Done — iteration 15.)
 - **Variant options now carry into the quote** — the chosen configuration and its
   computed price travel from the detail modal into the quote chip and the
   prefilled contact message. Distinct configurations of the same product are
@@ -133,15 +136,18 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
 
 ## 7. Suggested next steps (in priority order)
 
-1. **Wire forms to a backend** (Formspree/Basin/Netlify Forms or your API).
-2. **Real product/CMS data** + real imagery.
-3. **Pagination / "load more"** for large catalogues.
-4. **Checkout / payment** flow if this becomes transactional.
-5. Optional: self-host fonts, add more presets, more finder questions.
+1. **Real product/CMS data** + real imagery.
+2. **Pagination / "load more"** for large catalogues.
+3. **Checkout / payment** flow if this becomes transactional.
+4. Optional: self-host fonts, add more presets, more finder questions.
 
 _Done in iteration 14: variant options now carry into the quote basket — chosen
 configuration + computed price flow into the chip and prefilled message; distinct
 configs are separate lines, identical ones dedupe; old id-array quotes migrate._
+
+_Done in iteration 15: forms are backend-ready — `contact.endpoint` /
+`footer.newsletter.endpoint` in config POST FormData to any form service, with a
+busy state and retry-on-failure; empty endpoints keep the toast-only demo._
 
 ---
 

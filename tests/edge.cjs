@@ -53,6 +53,25 @@ const ok=(n,c)=>{r.push((c?'✓':'✗')+' '+n); if(!c)f++;};
   ok('compare reopens cleanly', (await p.$eval('#compare-modal',m=>m.getAttribute('aria-hidden')))==='false');
   await p.keyboard.press('Escape');
 
+  // configurable form backend: success path POSTs to the endpoint + clears form
+  await p.evaluate(()=>{
+    window.__fetchCalls=[];
+    window.SITE_CONFIG.contact.endpoint='https://example.test/submit';
+    window.fetch=(url,opts)=>{ window.__fetchCalls.push({url,hasBody:!!(opts&&opts.body)}); return Promise.resolve({ok:true,json:()=>Promise.resolve({})}); };
+  });
+  await p.evaluate(()=>document.querySelector('#contact').scrollIntoView()); await p.waitForTimeout(120);
+  await p.fill('#cf-name','Test User'); await p.fill('#cf-email','t@e.com'); await p.fill('#cf-message','hi');
+  await p.click('#contact-form [type="submit"]'); await p.waitForTimeout(200);
+  const call=await p.evaluate(()=>window.__fetchCalls[0]);
+  ok('contact endpoint POSTs to configured URL', !!call && call.url==='https://example.test/submit' && call.hasBody);
+  ok('contact form resets after successful POST', (await p.$eval('#cf-name',n=>n.value))==='');
+
+  // failure path leaves the form intact so the visitor can retry
+  await p.evaluate(()=>{ window.fetch=()=>Promise.resolve({ok:false,status:500}); });
+  await p.fill('#cf-name','Retry Me'); await p.fill('#cf-email','r@e.com'); await p.fill('#cf-message','again');
+  await p.click('#contact-form [type="submit"]'); await p.waitForTimeout(200);
+  ok('contact form kept intact after failed POST', (await p.$eval('#cf-name',n=>n.value))==='Retry Me');
+
   ok('no JS errors during edge tests', errors.length===0);
   console.log(r.join('\n')); if(errors.length) console.log('\nERRORS:\n'+errors.join('\n'));
   console.log('\n'+(f?`\x1b[31m${f} FAILED\x1b[0m`:'\x1b[32mALL PASS\x1b[0m'));

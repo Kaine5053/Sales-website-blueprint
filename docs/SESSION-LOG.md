@@ -19,7 +19,8 @@ and pushed to `claude/sales-website-blueprint-l7h0zv` (auto-deploys to Vercel).
 | 11 | `f24186f` | Catalogue **sort controls** (price/rating/reviews) + live **results count**. |
 | 12 | `75468cf` | **Full UI internationalisation**: `t()` helper + `DEFAULT_UI`, every JS-rendered string overridable via `config.ui` (verified with a French override). |
 | 13 | `2d5e68e` | **Product variant/option selectors** with live price recompute (e.g. care plan, capacity). |
-| 14 | _this commit_ | **Variant options carry into the quote basket**: quote lines now store the chosen option indices + show the configured option labels and computed price in the chip and prefilled message; distinct configs are separate lines, identical ones dedupe; old id-array quotes migrate forward. New regression assertion covers it. |
+| 14 | `fa6dcc5` | **Variant options carry into the quote basket**: quote lines now store the chosen option indices + show the configured option labels and computed price in the chip and prefilled message; distinct configs are separate lines, identical ones dedupe; old id-array quotes migrate forward. New regression assertion covers it. |
+| 15 | _this commit_ | **Configurable form backend**: `contact.endpoint` / `footer.newsletter.endpoint` in config make the contact + newsletter forms POST `FormData` to any form service (Formspree/Basin/Web3Forms/Netlify/custom), with a disabled “Sending…” state and retry-on-failure; empty endpoints keep the toast-only demo. Two new edge assertions (success POST + clear, failure keeps form intact). |
 
 ## Verification approach used throughout
 - `scripts/check.mjs` — smoke test (asset references, JS syntax, data globals).

@@ -170,9 +170,19 @@ add a spec or feature to a product and it appears in the table automatically.
 
 ## 🔌 Going to production — wiring up the forms
 
-The contact and newsletter forms are front-end only (they show a success toast).
-To make them real, point them at your backend or a form service (Formspree,
-Basin, Netlify Forms, your own API) inside `app.js` → `initEvents()`.
+The contact and newsletter forms work with **no code changes** — just set an
+endpoint in `config.js`:
+
+- `contact.endpoint` — the contact/quote form
+- `footer.newsletter.endpoint` — the footer signup
+
+Leave them `''` (the default) and the forms stay a front-end demo (success toast
+only). Set either to a form endpoint — Formspree, Basin, Web3Forms, Netlify
+Forms or your own API — and that form POSTs its fields as multipart `FormData`
+(the contact form also includes a `products` field with the current quote
+selection). While a request is in flight the submit button is disabled and shows
+“Sending…”; on a network/HTTP error the form is left intact so the visitor can
+retry. No keys or secrets live in the repo — only the endpoint URL.
 
 **Analytics** is already wired to a single `track()` helper in `app.js` and gated
 behind cookie consent. Set `analytics.provider` and `analytics.id` in `config.js`

@@ -41,6 +41,7 @@
     quoteAdded: '{name} added to your quote request', quoteFor: 'I’d like a quote for: {items}.',
     notifyMsg: 'Please let me know when {name} is back in stock.', notifyToast: 'We’ll notify you when {name} is back in stock',
     toastContact: 'Thanks! We’ll be in touch shortly.', toastSubscribe: 'You’re subscribed — welcome aboard!',
+    formSending: 'Sending…', toastError: 'Sorry, something went wrong — please try again or email us directly.',
     toastCopied: 'Link copied to clipboard', toastCompareMax: 'You can compare up to {max} products at once.',
     stockIn: 'In stock', stockLow: 'Low stock', stockOut: 'Sold out',
   };
@@ -1172,6 +1173,21 @@
     }
   }
 
+  // POST a form to a configured backend. FormData (multipart) keeps it broadly
+  // compatible (Formspree/Basin/Web3Forms/Netlify/custom) with no CORS preflight.
+  // Disables the submit button while in flight; on failure the form is left
+  // intact so the visitor can retry.
+  function submitToEndpoint(form, endpoint, body, onSuccess) {
+    const btn = form.querySelector('[type="submit"]');
+    const label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = t('formSending'); }
+    const done = () => { if (btn) { btn.disabled = false; btn.textContent = label; } };
+    fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); onSuccess(); })
+      .catch(() => { toast(t('toastError')); })
+      .finally(done);
+  }
+
   /* ====================================================================
      COOKIE CONSENT + ANALYTICS (analytics loads only after consent)
      ==================================================================== */
@@ -1408,16 +1424,29 @@
       applyCatalogFilter();
     });
 
-    // contact + newsletter forms (demo: no backend)
+    // contact + newsletter forms. With no configured endpoint these stay a
+    // front-end demo (success toast only); set contact.endpoint /
+    // footer.newsletter.endpoint in config.js to POST to a real backend.
     $('#contact-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      track('lead_submit', { products: quote.items.map((it) => lineKey(it)) });
-      e.target.reset();
-      clearQuote();
-      toast(t('toastContact'));
+      const form = e.target;
+      const endpoint = (cfg.contact && cfg.contact.endpoint) || '';
+      const onSuccess = () => {
+        track('lead_submit', { products: quote.items.map((it) => lineKey(it)) });
+        form.reset(); clearQuote(); toast(t('toastContact'));
+      };
+      if (!endpoint) { onSuccess(); return; }
+      const fd = new FormData(form);
+      fd.append('products', quote.items.map((it) => lineKey(it)).join(', '));
+      submitToEndpoint(form, endpoint, fd, onSuccess);
     });
     $('#newsletter-form')?.addEventListener('submit', (e) => {
-      e.preventDefault(); e.target.reset(); track('newsletter_signup'); toast(t('toastSubscribe'));
+      e.preventDefault();
+      const form = e.target;
+      const endpoint = (cfg.footer && cfg.footer.newsletter && cfg.footer.newsletter.endpoint) || '';
+      const onSuccess = () => { form.reset(); track('newsletter_signup'); toast(t('toastSubscribe')); };
+      if (!endpoint) { onSuccess(); return; }
+      submitToEndpoint(form, endpoint, new FormData(form), onSuccess);
     });
 
     // quote basket clear

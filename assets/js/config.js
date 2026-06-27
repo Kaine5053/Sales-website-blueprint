@@ -211,6 +211,11 @@ window.SITE_CONFIG = {
     email: 'hello@northwind.example',
     phone: '+44 20 7946 0000',
     address: '1 Commerce Street, London, EC1A 1AA',
+    // Optional backend. Leave '' for the front-end demo (success toast only).
+    // Set to a form endpoint (Formspree/Basin/Web3Forms/Netlify/your own API)
+    // and the contact form POSTs its fields there as multipart FormData,
+    // including a `products` field with the current quote selection.
+    endpoint: '',
   },
 
   /* ---- Footer ---- */
@@ -222,6 +227,8 @@ window.SITE_CONFIG = {
       placeholder: 'you@company.com',
       cta: 'Subscribe',
       note: 'No spam. Unsubscribe anytime.',
+      // Optional backend (see contact.endpoint). '' = demo (toast only).
+      endpoint: '',
     },
     columns: [
       { title: 'Product', links: [ { label: 'All products', href: '#products' }, { label: 'Pricing', href: '#pricing' }, { label: 'What’s new', href: '#products' }, { label: 'Guided finder', href: '#', action: 'open-quiz' } ] },
