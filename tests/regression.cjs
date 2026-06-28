@@ -15,17 +15,18 @@ const ok  = (n, c) => { results.push((c?'✓':'✗')+' '+n); if(!c) failed++; };
   await page.evaluate(()=>localStorage.clear());
   await page.reload({ waitUntil:'load' }); await page.waitForTimeout(600);
 
-  ok('home renders 6 products', (await page.$$('.product-card')).length===6);
+  ok('home renders first page (6 of 12)', (await page.$$('.product-card')).length===6);
+  ok('load-more present on full catalogue', !!(await page.$('[data-load-more]')));
   ok('JSON-LD present', (await page.$$('script[type="application/ld+json"]')).length===2);
 
   // search
-  await page.fill('#catalog-search','titan'); await page.waitForTimeout(250);
+  await page.fill('#catalog-search','apex'); await page.waitForTimeout(250);
   ok('search filters to 1', (await page.$$('.product-card')).length===1);
   await page.fill('#catalog-search',''); await page.waitForTimeout(250);
 
   // category filter
   await page.click('[data-category="Enterprise"]'); await page.waitForTimeout(200);
-  ok('Enterprise filter shows 2', (await page.$$('.product-card')).length===2);
+  ok('Enterprise filter shows 4', (await page.$$('.product-card')).length===4);
   await page.click('[data-category="All"]'); await page.waitForTimeout(200);
 
   // finder full flow
@@ -66,6 +67,21 @@ const ok  = (n, c) => { results.push((c?'✓':'✗')+' '+n); if(!c) failed++; };
   await (await page.$$('.product-card'))[0].click(); await page.waitForTimeout(250);
   await page.click('[data-product-request]'); await page.waitForTimeout(350);
   ok('quote basket has 1 chip', (await page.$$('.quote-chip')).length===1);
+
+  // variant carries into the quote: open a configured product, pick a non-default
+  // priced option, request it → the chip shows that option label.
+  await page.keyboard.press('Escape'); await page.waitForTimeout(150);
+  let configured=false;
+  for (const c of (await page.$$('.product-card'))){
+    await c.click(); await page.waitForTimeout(200);
+    if ((await page.$$('.pd-opt__choice')).length>=2){
+      await page.click('.pd-opt__choice[data-opt="0"][data-choice="1"]'); await page.waitForTimeout(150);
+      await page.click('[data-product-request]'); await page.waitForTimeout(300);
+      configured=true; break;
+    }
+    await page.keyboard.press('Escape'); await page.waitForTimeout(120);
+  }
+  ok('configured product carries option into quote', configured && (await page.$$('.quote-chip__opts')).length>=1);
 
   // resources article
   await page.evaluate(()=>document.querySelector('#resources').scrollIntoView()); await page.waitForTimeout(250);

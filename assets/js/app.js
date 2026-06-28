@@ -27,6 +27,7 @@
     helpMeChoose: 'Help me choose',
     favourites: 'Favourites',
     productOne: 'product', productMany: 'products',
+    loadMore: 'Show more', showingXofN: 'Showing {shown} of {total}',
     countInCategory: ' in {category}', countInFaves: ' in your favourites', countMatching: ' matching “{q}”',
     emptyTitle: 'No products found.', emptyBody: 'Try a different search or filter — or let us help you choose.',
     favesEmptyTitle: 'No favourites yet.', favesEmptyBody: 'Tap the heart on any product to save it here.',
@@ -41,6 +42,19 @@
     quoteAdded: '{name} added to your quote request', quoteFor: 'I’d like a quote for: {items}.',
     notifyMsg: 'Please let me know when {name} is back in stock.', notifyToast: 'We’ll notify you when {name} is back in stock',
     toastContact: 'Thanks! We’ll be in touch shortly.', toastSubscribe: 'You’re subscribed — welcome aboard!',
+    formSending: 'Sending…', toastError: 'Sorry, something went wrong — please try again or email us directly.',
+    addToCart: 'Add to cart', cartTitle: 'Your cart', cartEmpty: 'Your cart is empty.',
+    cartAdded: '{name} added to your cart', cartCheckout: 'Checkout', cartSubtotal: 'Subtotal',
+    cartSecure: 'Secure checkout powered by Stripe', cartContinue: 'Browse products',
+    cartRemove: 'Remove {name}', qtyDecrease: 'Decrease quantity', qtyIncrease: 'Increase quantity',
+    checkoutError: 'Couldn’t start checkout — please try again.', checkoutStarting: 'Starting secure checkout…',
+    checkoutSuccess: 'Thank you! Your order is confirmed.', checkoutCancelled: 'Checkout cancelled — your cart is saved.',
+    viewCart: 'View cart',
+    setupLaunch: 'Set up your site ({n})', setupTitle: 'Set up your site',
+    setupIntro: 'A quick checklist to make this blueprint yours. It updates automatically as you edit the config — and disappears once the essentials are done.',
+    setupProgress: '{done} of {total} essentials done', setupDone: 'Done', setupTodo: 'To do',
+    setupOptional: 'Optional', setupDismiss: 'Dismiss for now', setupHideForever: 'I’m finished — hide this',
+    setupAllDone: 'All set! 🎉 Every essential is configured.',
     toastCopied: 'Link copied to clipboard', toastCompareMax: 'You can compare up to {max} products at once.',
     stockIn: 'In stock', stockLow: 'Low stock', stockOut: 'Sold out',
   };
@@ -77,6 +91,9 @@
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6"/><circle cx="18" cy="21" r="1.6"/><path d="M2.5 3h2l2.2 12.2a1.6 1.6 0 0 0 1.6 1.3h8.4a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     sun: '<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>',
     moon: '<svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>',
     chevronUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>',
@@ -164,7 +181,11 @@
        <a class="fave-indicator" href="#products" data-faves-only title="Your favourites" aria-label="View favourites">
          ${icon('heart')}<span class="fave-indicator__count" id="fave-count" hidden>0</span>
        </a>
+       ${cartMode ? `<button class="cart-button" id="cart-button" data-open-cart title="${t('viewCart')}" aria-label="${t('viewCart')}">
+         ${icon('cart')}<span class="cart-button__count" hidden>0</span>
+       </button>` : ''}
        <a class="btn btn--primary btn--sm" href="${esc(cfg.headerCta.href)}">${esc(cfg.headerCta.label)}</a>`;
+    renderCartButton();
   }
 
   /* ====================================================================
@@ -206,7 +227,7 @@
           </div>
           <div class="hero__visual" data-reveal data-reveal-delay="1">
             <img src="${esc(h.image)}" alt="Product showcase" loading="eager" width="600" height="510"
-                 onerror="this.style.display='none'">
+                 data-imgfallback="none">
             <div class="hero__floating hero__floating--tl">${icon(h.floatingTop.icon)} ${esc(h.floatingTop.text)}</div>
             <div class="hero__floating hero__floating--br">${icon(h.floatingBottom.icon)} ${esc(h.floatingBottom.text)}</div>
           </div>
@@ -241,7 +262,12 @@
   /* ====================================================================
      RENDER: product catalogue (with search + category filters)
      ==================================================================== */
-  const catalogState = { query: '', category: 'All', favesOnly: false, sort: 'featured' };
+  const catalogState = { query: '', category: 'All', favesOnly: false, sort: 'featured', results: [], shown: Infinity };
+  // 0/undefined pageSize = show everything (Infinity).
+  function catalogPageSize() {
+    const n = cfg.catalog ? +cfg.catalog.pageSize : 0;
+    return n > 0 ? n : Infinity;
+  }
   const compareState = { ids: [], max: 4 };
 
   /* Safe localStorage access — never throws (private mode / disabled storage). */
@@ -302,7 +328,7 @@
         </button>
         <div class="product-card__media">
           <img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" width="320" height="220"
-               onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'pd-fallback'}))">
+               data-imgfallback="replace">
           ${badges ? `<div class="product-card__badges">${badges}</div>` : ''}
         </div>
         <div class="product-card__body">
@@ -316,6 +342,7 @@
             <span class="stars" title="${esc(p.rating)} out of 5">${icon('star')}<span style="font-size:.8rem;color:var(--text-muted);font-weight:600">${esc(p.rating)}</span></span>
           </div>
           <span class="stock-badge ${st.cls}"><span class="stock-dot"></span>${esc(st.label)}</span>
+          ${cartMode && p.stock !== 'out' ? `<button class="btn btn--secondary btn--sm product-card__add" data-add-cart="${esc(p.id)}" aria-label="Add ${esc(p.name)} to cart">${icon('cart')} ${t('addToCart')}</button>` : ''}
         </div>
       </article>`;
   }
@@ -356,15 +383,50 @@
         (catalogState.query.trim() ? t('countMatching', { q: catalogState.query.trim() }) : '');
     }
 
+    // store the filtered/sorted results and reset to the first page
+    catalogState.results = list;
+    catalogState.shown = catalogPageSize();
+    renderCatalogPage();
+  }
+
+  // Render the current page-slice of the filtered results + the "Show more"
+  // control. Kept separate from filtering so "Show more" never re-filters.
+  function renderCatalogPage(focusNew) {
     const grid = $('#product-grid');
+    const more = $('#catalog-more');
+    const list = catalogState.results;
+    if (!grid) return;
     if (list.length === 0) {
       const favesEmpty = catalogState.favesOnly && faves.ids.length === 0;
       grid.innerHTML = `<div class="empty-state">${icon(favesEmpty ? 'heart' : 'search')}<p><strong>${favesEmpty ? t('favesEmptyTitle') : t('emptyTitle')}</strong><br>${favesEmpty ? t('favesEmptyBody') : t('emptyBody')}</p>
         ${favesEmpty ? '' : `<button class="btn btn--primary" data-action="open-quiz" style="margin-top:1rem">${icon('compass')} ${t('helpMeChoose')}</button>`}</div>`;
+      if (more) { more.hidden = true; more.innerHTML = ''; }
       return;
     }
-    grid.innerHTML = list.map(productCardHTML).join('');
+    const prevShown = focusNew ? Math.max(0, Math.min(catalogState.shown - catalogPageSize(), list.length)) : 0;
+    const slice = list.slice(0, catalogState.shown);
+    grid.innerHTML = slice.map(productCardHTML).join('');
     $$('[data-reveal]', grid).forEach((n) => n.classList.add('is-visible'));
+
+    if (more) {
+      const remaining = list.length - slice.length;
+      if (remaining > 0) {
+        more.hidden = false;
+        more.innerHTML =
+          `<button class="btn btn--secondary" data-load-more aria-controls="product-grid">${t('loadMore')} <span class="catalog-more__n">(+${Math.min(remaining, catalogPageSize())})</span></button>
+           <p class="catalog-more__hint" aria-live="polite">${t('showingXofN', { shown: slice.length, total: list.length })}</p>`;
+      } else { more.hidden = true; more.innerHTML = ''; }
+    }
+    // a11y: after "Show more", move focus to the first newly revealed card
+    if (focusNew) {
+      const cards = $$('.product-card__trigger', grid);
+      if (cards[prevShown]) cards[prevShown].focus();
+    }
+  }
+
+  function loadMoreProducts() {
+    catalogState.shown += catalogPageSize();
+    renderCatalogPage(true);
   }
 
   /* ====================================================================
@@ -389,14 +451,7 @@
   }
 
   function pdComputedPrice() {
-    const p = pdState.product;
-    if (!p) return 0;
-    let total = p.price;
-    (p.options || []).forEach((group, gi) => {
-      const c = group.choices[pdState.sel[gi]];
-      if (c) total += (c.priceDelta || 0);
-    });
-    return total;
+    return pdState.product ? linePrice(pdState.product, pdState.sel) : 0;
   }
 
   function selectOption(gi, ci) {
@@ -439,7 +494,7 @@
         <div class="pd__related-list">
           ${related.map((r) => `
             <button class="pd-related-card" data-product="${esc(r.id)}">
-              <img src="${esc(r.image)}" alt="${esc(r.name)}" onerror="this.style.visibility='hidden'">
+              <img src="${esc(r.image)}" alt="${esc(r.name)}" data-imgfallback="hide">
               <span><span class="pd-related-name">${esc(r.name)}</span><span class="pd-related-price">${money(r.price)}</span></span>
             </button>`).join('')}
         </div>
@@ -448,7 +503,7 @@
     $('#product-modal-content').innerHTML = `
       <div class="pd">
         <div class="pd__media">
-          <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.opacity=0">
+          <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="dim">
         </div>
         <div class="pd__body">
           <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
@@ -469,7 +524,9 @@
           <div class="pd__actions">
             ${p.stock === 'out'
               ? `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-notify="${esc(p.id)}">${t('pdNotify')} ${icon('arrowRight')}</a>`
-              : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">${t('pdRequest')} ${icon('arrowRight')}</a>`}
+              : (cartMode
+                ? `<button class="btn btn--primary btn--block" data-add-cart="${esc(p.id)}">${icon('cart')} ${t('addToCart')}</button>`
+                : `<a class="btn btn--primary btn--block" href="#contact" data-close-modal data-product-request="${esc(p.id)}">${t('pdRequest')} ${icon('arrowRight')}</a>`)}
             <button class="btn btn--secondary" data-compare="${esc(p.id)}">${t('pdAddCompare')}</button>
           </div>
           ${relatedHTML}
@@ -584,7 +641,7 @@
     section.hidden = false;
     $('#recent-mount').innerHTML = items.map((p) => `
       <button class="recent-card" data-product="${esc(p.id)}" title="${esc(p.name)}">
-        <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+        <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="hide">
         <span class="recent-card__name">${esc(p.name)}</span>
         <span class="recent-card__price">${money(p.price)}</span>
       </button>`).join('');
@@ -740,7 +797,7 @@
         : 'A solid all-round choice';
       return `
         <div class="quiz-pick" data-product="${esc(p.id)}" role="button" tabindex="0">
-          <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+          <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="hide">
           <div class="quiz-pick__body">
             ${i === 0 ? `<span class="badge badge--solid">${icon('sparkles')} ${t('quizTopMatch')}</span>` : ''}
             <div style="font-weight:700;margin-top:.25rem">${esc(p.name)}</div>
@@ -852,7 +909,7 @@
 
     const head = items.map((p) => `
       <th class="ct-product" scope="col">
-        <img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.style.visibility='hidden'">
+        <img src="${esc(p.image)}" alt="${esc(p.name)}" data-imgfallback="hide">
         <div class="ct-name">${esc(p.name)}</div>
         <div class="product-card__cat">${esc(p.category)}</div>
       </th>`).join('');
@@ -1072,25 +1129,60 @@
   /* ====================================================================
      QUOTE BASKET — collect products into a pre-filled quote request
      ==================================================================== */
-  const quote = { ids: store.get('quote', []) };
+  // A quote line carries the product id PLUS the chosen option indices (sel),
+  // so a configured product reaches the quote with its variant + computed price.
+  function defaultSel(id) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    return ((p && p.options) || []).map(() => 0);
+  }
+  // Stable identity for a line = product + its configuration. Two distinct
+  // configurations of the same product are separate lines; identical ones dedupe.
+  function lineKey(it) { return it.id + (it.sel && it.sel.length ? '|' + it.sel.join('-') : ''); }
+  function linePrice(p, sel) {
+    let total = p.price;
+    (p.options || []).forEach((g, gi) => { const c = g.choices[(sel || [])[gi]]; if (c) total += (c.priceDelta || 0); });
+    return total;
+  }
+  function lineOptionLabels(p, sel) {
+    return (p.options || []).map((g, gi) => { const c = g.choices[(sel || [])[gi]]; return c ? c.label : null; }).filter(Boolean);
+  }
+  function persistQuote() { store.set('quote', quote.items); }
 
-  function addToQuote(id) {
-    if (!PRODUCTS.some((p) => p.id === id)) return;
-    if (!quote.ids.includes(id)) {
-      quote.ids.push(id);
-      store.set('quote', quote.ids);
-      const p = PRODUCTS.find((x) => x.id === id);
+  // Load + migrate: older builds stored a bare array of ids; map those to lines.
+  // Guard the type — this runs at boot, before init()'s safe() wrappers, so a
+  // malformed stored value must not throw and break the whole page.
+  const storedQuote = store.get('quote', []);
+  const quote = {
+    items: (Array.isArray(storedQuote) ? storedQuote : []).map((entry) => {
+      if (typeof entry === 'string') return { id: entry, sel: defaultSel(entry) };
+      if (entry && entry.id) return { id: entry.id, sel: Array.isArray(entry.sel) ? entry.sel : defaultSel(entry.id) };
+      return null;
+    }).filter((it) => it && PRODUCTS.some((p) => p.id === it.id)),
+  };
+
+  function addToQuote(id, sel) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    if (!p) return;
+    // normalise the selection to this product's option groups (clamp stray indices)
+    const normSel = Array.isArray(sel)
+      ? (p.options || []).map((g, gi) => { const ci = sel[gi]; return (ci >= 0 && ci < g.choices.length) ? ci : 0; })
+      : defaultSel(id);
+    const item = { id, sel: normSel };
+    const key = lineKey(item);
+    if (!quote.items.some((it) => lineKey(it) === key)) {
+      quote.items.push(item);
+      persistQuote();
       toast(t('quoteAdded', { name: p.name }));
-      track('add_to_quote', { id });
+      track('add_to_quote', { id, sel: normSel });
     }
     renderQuote(true);
   }
-  function removeFromQuote(id) {
-    quote.ids = quote.ids.filter((x) => x !== id);
-    store.set('quote', quote.ids);
+  function removeFromQuote(key) {
+    quote.items = quote.items.filter((it) => lineKey(it) !== key);
+    persistQuote();
     renderQuote();
   }
-  function clearQuote() { quote.ids = []; store.set('quote', []); renderQuote(); }
+  function clearQuote() { quote.items = []; persistQuote(); renderQuote(); }
 
   // Out-of-stock "notify me": prefills the contact form without quote language.
   function notifyProduct(id) {
@@ -1113,21 +1205,27 @@
     const basket = $('#quote-basket');
     const list = $('#quote-list');
     if (!basket || !list) return;
-    const items = quote.ids.map((id) => PRODUCTS.find((p) => p.id === id)).filter(Boolean);
-    basket.hidden = items.length === 0;
-    list.innerHTML = items.map((p) => `
+    const lines = quote.items.map((it) => {
+      const p = PRODUCTS.find((x) => x.id === it.id);
+      return p ? { key: lineKey(it), p, price: linePrice(p, it.sel), opts: lineOptionLabels(p, it.sel) } : null;
+    }).filter(Boolean);
+    basket.hidden = lines.length === 0;
+    list.innerHTML = lines.map((L) => `
       <li class="quote-chip">
-        <img src="${esc(p.image)}" alt="" onerror="this.style.visibility='hidden'">
-        <span class="quote-chip__name">${esc(p.name)}</span>
-        <span class="quote-chip__price">${money(p.price)}</span>
-        <button type="button" class="quote-chip__remove" data-quote-remove="${esc(p.id)}" aria-label="Remove ${esc(p.name)} from quote">${icon('close')}</button>
+        <img src="${esc(L.p.image)}" alt="" data-imgfallback="hide">
+        <span class="quote-chip__text">
+          <span class="quote-chip__name">${esc(L.p.name)}</span>
+          ${L.opts.length ? `<span class="quote-chip__opts">${esc(L.opts.join(' · '))}</span>` : ''}
+        </span>
+        <span class="quote-chip__price">${money(L.price)}</span>
+        <button type="button" class="quote-chip__remove" data-quote-remove="${esc(L.key)}" aria-label="Remove ${esc(L.p.name)} from quote">${icon('close')}</button>
       </li>`).join('');
 
     // keep the message + subject in sync with the selection
     const msg = $('#cf-message');
     const subject = $('#cf-subject');
-    if (items.length) {
-      const names = items.map((p) => `${p.name} (${money(p.price)})`).join(', ');
+    if (lines.length) {
+      const names = lines.map((L) => `${L.p.name}${L.opts.length ? ' [' + L.opts.join(', ') + ']' : ''} (${money(L.price)})`).join(', ');
       const line = t('quoteFor', { items: names });
       if (msg && (!msg.value || msg.dataset.auto === '1')) { msg.value = line; msg.dataset.auto = '1'; }
       if (subject) subject.value = 'A custom quote';
@@ -1139,6 +1237,259 @@
       const contact = $('#contact');
       if (contact) contact.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  // POST a form to a configured backend. FormData (multipart) keeps it broadly
+  // compatible (Formspree/Basin/Web3Forms/Netlify/custom) with no CORS preflight.
+  // Disables the submit button while in flight; on failure the form is left
+  // intact so the visitor can retry.
+  function submitToEndpoint(form, endpoint, body, onSuccess) {
+    const btn = form.querySelector('[type="submit"]');
+    const label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = t('formSending'); }
+    const done = () => { if (btn) { btn.disabled = false; btn.textContent = label; } };
+    fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); onSuccess(); })
+      .catch(() => { toast(t('toastError')); })
+      .finally(done);
+  }
+
+  /* ====================================================================
+     CART + CHECKOUT — buy-now flow via Stripe Checkout (commerce.mode='cart').
+     Reuses the quote helpers lineKey / linePrice / lineOptionLabels; a cart
+     line adds a qty. With mode='quote' (default) none of this is shown.
+     ==================================================================== */
+  const commerce = cfg.commerce || {};
+  const cartMode = commerce.mode === 'cart';
+
+  const storedCart = store.get('cart', []);
+  const cart = {
+    items: (Array.isArray(storedCart) ? storedCart : []).map((it) => {
+      if (!it || !it.id) return null;
+      return { id: it.id, sel: Array.isArray(it.sel) ? it.sel : defaultSel(it.id),
+        qty: Math.max(1, Math.min(99, Math.floor(+it.qty || 1))) };
+    }).filter((it) => it && PRODUCTS.some((p) => p.id === it.id)),
+  };
+  function persistCart() { store.set('cart', cart.items); }
+  function cartCount() { return cart.items.reduce((n, it) => n + it.qty, 0); }
+  function cartSubtotal() {
+    return cart.items.reduce((sum, it) => {
+      const p = PRODUCTS.find((x) => x.id === it.id);
+      return sum + (p ? linePrice(p, it.sel) * it.qty : 0);
+    }, 0);
+  }
+
+  function addToCart(id, sel, qty) {
+    const p = PRODUCTS.find((x) => x.id === id);
+    if (!p) return;
+    const normSel = Array.isArray(sel)
+      ? (p.options || []).map((g, gi) => { const ci = sel[gi]; return (ci >= 0 && ci < g.choices.length) ? ci : 0; })
+      : defaultSel(id);
+    const q = Math.max(1, Math.min(99, Math.floor(+qty || 1)));
+    const key = lineKey({ id, sel: normSel });
+    const existing = cart.items.find((it) => lineKey(it) === key);
+    if (existing) existing.qty = Math.min(99, existing.qty + q);
+    else cart.items.push({ id, sel: normSel, qty: q });
+    persistCart();
+    toast(t('cartAdded', { name: p.name }));
+    track('add_to_cart', { id, sel: normSel, qty: q });
+    renderCartButton();
+    renderCart();
+  }
+  function removeFromCart(key) {
+    cart.items = cart.items.filter((it) => lineKey(it) !== key);
+    persistCart(); renderCartButton(); renderCart();
+  }
+  function changeQty(key, delta) {
+    const it = cart.items.find((x) => lineKey(x) === key);
+    if (!it) return;
+    const next = it.qty + delta;
+    if (next < 1) cart.items = cart.items.filter((x) => x !== it);
+    else it.qty = Math.min(99, next);
+    persistCart(); renderCartButton(); renderCart();
+  }
+  function clearCart() { cart.items = []; persistCart(); renderCartButton(); renderCart(); }
+
+  function renderCartButton() {
+    const badge = $('#cart-button .cart-button__count');
+    if (!badge) return;
+    const n = cartCount();
+    badge.textContent = n;
+    badge.hidden = n === 0;
+  }
+
+  function renderCart() {
+    const wrap = $('#cart-content');
+    if (!wrap) return;
+    const lines = cart.items.map((it) => {
+      const p = PRODUCTS.find((x) => x.id === it.id);
+      return p ? { key: lineKey(it), p, qty: it.qty, unit: linePrice(p, it.sel), opts: lineOptionLabels(p, it.sel) } : null;
+    }).filter(Boolean);
+
+    if (!lines.length) {
+      wrap.innerHTML = `<div class="cart-head"><h2 id="cart-title">${t('cartTitle')}</h2></div>
+        <div class="cart-empty">${icon('cart')}<p>${t('cartEmpty')}</p>
+          <button class="btn btn--secondary" data-close-modal>${t('cartContinue')}</button></div>`;
+      return;
+    }
+    const rows = lines.map((L) => `
+      <li class="cart-line">
+        <img class="cart-line__img" src="${esc(L.p.image)}" alt="" data-imgfallback="hide">
+        <div class="cart-line__info">
+          <span class="cart-line__name">${esc(L.p.name)}</span>
+          ${L.opts.length ? `<span class="cart-line__opts">${esc(L.opts.join(' · '))}</span>` : ''}
+          <span class="cart-line__unit">${money(L.unit)}</span>
+        </div>
+        <div class="cart-line__qty" role="group" aria-label="Quantity for ${esc(L.p.name)}">
+          <button class="qty-btn" data-cart-qty="${esc(L.key)}" data-delta="-1" aria-label="${t('qtyDecrease')}">${icon('minus')}</button>
+          <span class="qty-val" aria-live="polite">${L.qty}</span>
+          <button class="qty-btn" data-cart-qty="${esc(L.key)}" data-delta="1" aria-label="${t('qtyIncrease')}">${icon('plus')}</button>
+        </div>
+        <span class="cart-line__total">${money(L.unit * L.qty)}</span>
+        <button class="cart-line__remove" data-cart-remove="${esc(L.key)}" aria-label="${t('cartRemove', { name: L.p.name })}">${icon('close')}</button>
+      </li>`).join('');
+    wrap.innerHTML = `
+      <div class="cart-head"><h2 id="cart-title">${t('cartTitle')}</h2></div>
+      <ul class="cart-list" role="list">${rows}</ul>
+      <div class="cart-foot">
+        <div class="cart-foot__row"><span>${t('cartSubtotal')}</span><strong class="cart-foot__total">${money(cartSubtotal())}</strong></div>
+        <button class="btn btn--primary btn--block" data-cart-checkout>${icon('lock')} ${t('cartCheckout')}</button>
+        <p class="cart-secure">${icon('shield')} ${t('cartSecure')}</p>
+      </div>`;
+  }
+
+  function openCart() { renderCart(); openModal('#cart-modal'); }
+
+  function checkout() {
+    if (!cart.items.length) return;
+    const endpoint = commerce.checkoutEndpoint || '/api/checkout';
+    const btn = $('[data-cart-checkout]');
+    if (btn) { btn.disabled = true; btn.textContent = t('checkoutStarting'); }
+    track('begin_checkout', { value: cartSubtotal(), lines: cart.items.length });
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ items: cart.items.map((it) => ({ id: it.id, sel: it.sel, qty: it.qty })) }),
+    })
+      .then((res) => res.json().catch(() => ({})).then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok && data && data.url) { window.location.assign(data.url); return; }
+        throw new Error((data && data.error) || 'checkout');
+      })
+      .catch(() => {
+        toast(t('checkoutError'));
+        if (btn) { btn.disabled = false; btn.innerHTML = `${icon('lock')} ${t('cartCheckout')}`; }
+      });
+  }
+
+  // Returning from Stripe: ?checkout=success|cancelled → toast (+ clear on success).
+  function handleCheckoutReturn() {
+    const params = new URLSearchParams(location.search);
+    const status = params.get('checkout');
+    if (!status) return;
+    if (status === 'success') { clearCart(); toast(t('checkoutSuccess')); }
+    else if (status === 'cancelled') { toast(t('checkoutCancelled')); }
+    params.delete('checkout');
+    const qs = params.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+  }
+
+  /* ====================================================================
+     SETUP GUIDE — onboarding checklist that auto-detects unreplaced blueprint
+     placeholders. Read-only: it inspects config/products/DOM and tells the
+     owner what to edit. Hides itself once every essential item is done, or when
+     setup.enabled is false / it's been dismissed.
+     ==================================================================== */
+  const setupCfg = cfg.setup || {};
+  const DEMO_IDS = ['aurora-core', 'aurora-pro', 'aurora-max', 'nimbus-lite', 'nimbus-flex', 'titan-x',
+    'breeze-mini', 'aurora-air', 'nimbus-studio', 'vertex-team', 'titan-pro', 'apex-grid'];
+
+  function setupTasks() {
+    const c = cfg.contact || {};
+    const a = cfg.analytics || {};
+    const com = cfg.commerce || {};
+    const canonical = (document.querySelector('link[rel="canonical"]') || {}).href || '';
+    const hasDemoProducts = PRODUCTS.some((p) => DEMO_IDS.includes(p.id));
+    const placeholderImgs = PRODUCTS.some((p) => /assets\/img\/(product-\d+|hero)\.svg$/.test(p.image || ''));
+    return [
+      { key: 'brand', title: 'Set your brand name & logo', optional: false,
+        done: !!(cfg.brand && cfg.brand.name && cfg.brand.name !== 'Northwind'),
+        how: 'Edit <code>assets/js/config.js</code> → <code>brand</code> (name, tagline, and the inline <code>logoSvg</code>).' },
+      { key: 'products', title: 'Add your own products', optional: false,
+        done: !hasDemoProducts,
+        how: 'Replace the demo entries in <code>assets/js/products.js</code> with your catalogue (name, price, features, specs, and the <code>attrs</code> the finder scores on).' },
+      { key: 'images', title: 'Replace the placeholder imagery', optional: false,
+        done: !placeholderImgs,
+        how: 'Swap the gradient SVGs in <code>assets/img/</code> for real photos and point each product’s <code>image</code> at them. Replace <code>og.png</code> with your 1200×630 share image.' },
+      { key: 'contact', title: 'Add your contact details', optional: false,
+        done: !!(c.email && !/\.example$/i.test(String(c.email))),
+        how: 'Edit <code>config.js</code> → <code>contact</code> (email, phone, address).' },
+      { key: 'domain', title: 'Point SEO at your domain', optional: false,
+        done: !!(canonical && !/sales-website-blueprint\.vercel\.app/.test(canonical)),
+        how: 'Replace the blueprint domain in <code>index.html</code> (canonical + og tags), <code>sitemap.xml</code> and <code>robots.txt</code>.' },
+      { key: 'leads', title: 'Connect the contact form', optional: false,
+        done: !!(c.endpoint && String(c.endpoint).trim()),
+        how: 'Set <code>contact.endpoint</code> in config.js to a form service (Formspree / Basin / Web3Forms / Netlify) or your own API — otherwise the form only shows a success message.' },
+      { key: 'payments', title: 'Turn on payments', optional: true,
+        done: com.mode === 'cart',
+        how: 'For a buy-now flow set <code>commerce.mode:&#39;cart&#39;</code> and add <code>STRIPE_SECRET_KEY</code> in your host’s env. Leave it <code>&#39;quote&#39;</code> for lead-gen. See README → “Selling”.' },
+      { key: 'analytics', title: 'Enable analytics', optional: true,
+        done: !!(a.provider && a.provider !== 'stub'),
+        how: 'Set <code>analytics.provider</code> + <code>id</code> in config.js (GA4 or Plausible), then add its script origin to the CSP in <code>vercel.json</code>.' },
+    ];
+  }
+
+  function setupRemaining() { return setupTasks().filter((x) => !x.optional && !x.done).length; }
+
+  function renderSetupLauncher() {
+    const launcher = $('#setup-launcher');
+    if (!launcher) return;
+    const off = !setupCfg.enabled || lsGet('setup-dismissed') === '1';
+    const remaining = setupRemaining();
+    launcher.hidden = off || remaining === 0; // disappears once the essentials are done
+    if (!launcher.hidden) {
+      launcher.innerHTML = `${icon('sparkles')}<span class="setup-launcher__txt">${esc(t('setupLaunch', { n: remaining }))}</span>`;
+    }
+  }
+
+  function openSetup() {
+    const tasks = setupTasks();
+    const essential = tasks.filter((x) => !x.optional);
+    const doneCount = essential.filter((x) => x.done).length;
+    const pct = Math.round((doneCount / essential.length) * 100);
+    const allDone = doneCount === essential.length;
+    const rows = tasks.map((task) => `
+      <li class="setup-item ${task.done ? 'is-done' : ''}">
+        <span class="setup-check" aria-hidden="true">${task.done ? icon('check') : ''}</span>
+        <div class="setup-item__body">
+          <span class="setup-item__title">${esc(task.title)}
+            ${task.optional ? `<span class="setup-tag">${esc(t('setupOptional'))}</span>` : ''}
+            <span class="setup-status">${task.done ? esc(t('setupDone')) : esc(t('setupTodo'))}</span>
+          </span>
+          <p class="setup-item__how">${task.how}</p>
+        </div>
+      </li>`).join('');
+    $('#setup-content').innerHTML = `
+      <div class="setup-head">
+        <h2 id="setup-title">${esc(t('setupTitle'))}</h2>
+        <p class="setup-intro">${esc(t('setupIntro'))}</p>
+        <div class="setup-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${essential.length}" aria-valuenow="${doneCount}" aria-label="${esc(t('setupProgress', { done: doneCount, total: essential.length }))}">
+          <div class="setup-progress__bar" style="width:${pct}%"></div>
+        </div>
+        <p class="setup-progress__label">${allDone ? esc(t('setupAllDone')) : esc(t('setupProgress', { done: doneCount, total: essential.length }))}</p>
+      </div>
+      <ul class="setup-list" role="list">${rows}</ul>
+      <div class="setup-foot">
+        <button class="btn btn--ghost btn--sm" data-setup-dismiss>${esc(t('setupHideForever'))}</button>
+      </div>`;
+    openModal('#setup-modal');
+  }
+
+  function dismissSetup() {
+    lsSet('setup-dismissed', '1');
+    const m = $('#setup-modal');
+    if (m && m.getAttribute('aria-hidden') === 'false') closeModal(m);
+    renderSetupLauncher();
   }
 
   /* ====================================================================
@@ -1293,16 +1644,48 @@
      Global event delegation
      ==================================================================== */
   function initEvents() {
+    // Image-load fallbacks via delegation (replaces inline onerror= handlers so
+    // a strict CSP can use script-src 'self' with no 'unsafe-inline'). The
+    // `error` event doesn't bubble, so listen in the capture phase.
+    document.addEventListener('error', (e) => {
+      const el = e.target;
+      if (!(el instanceof HTMLImageElement) || !el.hasAttribute('data-imgfallback')) return;
+      switch (el.getAttribute('data-imgfallback')) {
+        case 'replace': { const d = document.createElement('div'); d.className = 'pd-fallback'; el.replaceWith(d); break; }
+        case 'none': el.style.display = 'none'; break;
+        case 'dim': el.style.opacity = '0'; break;
+        default: el.style.visibility = 'hidden'; // 'hide'
+      }
+    }, true);
+
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-resource], [data-product], [data-category], [data-filter], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-add-cart], [data-open-cart], [data-cart-remove], [data-cart-qty], [data-cart-checkout], [data-open-setup], [data-setup-dismiss], [data-resource], [data-product], [data-category], [data-filter], [data-load-more], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
       if (t.hasAttribute('data-opt')) { selectOption(+t.getAttribute('data-opt'), +t.getAttribute('data-choice')); return; }
       if (t.hasAttribute('data-product-notify')) { notifyProduct(t.getAttribute('data-product-notify')); /* fall through to close-modal */ }
       if (t.hasAttribute('data-resource')) { openArticle(Number(t.getAttribute('data-resource'))); return; }
-      if (t.hasAttribute('data-product-request')) { addToQuote(t.getAttribute('data-product-request')); /* fall through to close-modal below */ }
+      if (t.hasAttribute('data-product-request')) {
+        const rid = t.getAttribute('data-product-request');
+        // carry the live variant selection when the request comes from that product's open modal
+        const sel = (pdState.product && pdState.product.id === rid) ? pdState.sel.slice() : null;
+        addToQuote(rid, sel); /* fall through to close-modal below */
+      }
       if (t.hasAttribute('data-quote-remove')) { e.preventDefault(); removeFromQuote(t.getAttribute('data-quote-remove')); return; }
+      if (t.hasAttribute('data-add-cart')) {
+        e.preventDefault(); e.stopPropagation();
+        const cid = t.getAttribute('data-add-cart');
+        // carry the live variant selection when adding from that product's open modal
+        const sel = (pdState.product && pdState.product.id === cid) ? pdState.sel.slice() : null;
+        addToCart(cid, sel, 1); return;
+      }
+      if (t.hasAttribute('data-open-cart')) { e.preventDefault(); openCart(); return; }
+      if (t.hasAttribute('data-cart-remove')) { e.preventDefault(); removeFromCart(t.getAttribute('data-cart-remove')); return; }
+      if (t.hasAttribute('data-cart-qty')) { e.preventDefault(); changeQty(t.getAttribute('data-cart-qty'), Number(t.getAttribute('data-delta'))); return; }
+      if (t.hasAttribute('data-cart-checkout')) { e.preventDefault(); checkout(); return; }
+      if (t.hasAttribute('data-open-setup')) { e.preventDefault(); openSetup(); return; }
+      if (t.hasAttribute('data-setup-dismiss')) { e.preventDefault(); dismissSetup(); return; }
       if (t.hasAttribute('data-fave')) { e.preventDefault(); e.stopPropagation(); toggleFave(t.getAttribute('data-fave')); return; }
       if (t.hasAttribute('data-share')) { e.preventDefault(); e.stopPropagation(); shareProduct(t.getAttribute('data-share')); return; }
       if (t.hasAttribute('data-compare')) { e.preventDefault(); e.stopPropagation(); toggleCompare(t.getAttribute('data-compare')); return; }
@@ -1311,6 +1694,7 @@
         if (catalogState.favesOnly) catalogState.category = 'All';
         renderCatalog(); return;
       }
+      if (t.hasAttribute('data-load-more')) { e.preventDefault(); loadMoreProducts(); return; }
       if (t.hasAttribute('data-product')) { openProduct(t.getAttribute('data-product')); return; }
       if (t.hasAttribute('data-category')) {
         catalogState.favesOnly = false;
@@ -1372,16 +1756,29 @@
       applyCatalogFilter();
     });
 
-    // contact + newsletter forms (demo: no backend)
+    // contact + newsletter forms. With no configured endpoint these stay a
+    // front-end demo (success toast only); set contact.endpoint /
+    // footer.newsletter.endpoint in config.js to POST to a real backend.
     $('#contact-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      track('lead_submit', { products: quote.ids.slice() });
-      e.target.reset();
-      clearQuote();
-      toast(t('toastContact'));
+      const form = e.target;
+      const endpoint = (cfg.contact && cfg.contact.endpoint) || '';
+      const onSuccess = () => {
+        track('lead_submit', { products: quote.items.map((it) => lineKey(it)) });
+        form.reset(); clearQuote(); toast(t('toastContact'));
+      };
+      if (!endpoint) { onSuccess(); return; }
+      const fd = new FormData(form);
+      fd.append('products', quote.items.map((it) => lineKey(it)).join(', '));
+      submitToEndpoint(form, endpoint, fd, onSuccess);
     });
     $('#newsletter-form')?.addEventListener('submit', (e) => {
-      e.preventDefault(); e.target.reset(); track('newsletter_signup'); toast(t('toastSubscribe'));
+      e.preventDefault();
+      const form = e.target;
+      const endpoint = (cfg.footer && cfg.footer.newsletter && cfg.footer.newsletter.endpoint) || '';
+      const onSuccess = () => { form.reset(); track('newsletter_signup'); toast(t('toastSubscribe')); };
+      if (!endpoint) { onSuccess(); return; }
+      submitToEndpoint(form, endpoint, new FormData(form), onSuccess);
     });
 
     // quote basket clear
@@ -1446,6 +1843,9 @@
     safe('themeSwitcher', renderThemeSwitcher);
     safe('compareTray', renderCompareTray);
     safe('quote', renderQuote);
+    safe('cart', () => { renderCartButton(); renderCart(); });
+    safe('checkoutReturn', handleCheckoutReturn);
+    safe('setup', renderSetupLauncher);
     safe('structuredData', injectStructuredData);
     safe('events', initEvents);
     safe('scroll', initScroll);

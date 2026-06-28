@@ -7,10 +7,22 @@
   <meta name="theme-color" content="#2563eb">
   <title>Northwind — Find your perfect product</title>
 
-  <!-- Open Graph / social preview -->
+  <!-- Canonical + social preview.
+       PRODUCTION: replace the domain below (and in sitemap.xml / robots.txt)
+       with your own; swap og:image for your branded 1200×630 image. -->
+  <link rel="canonical" href="https://sales-website-blueprint.vercel.app/">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Northwind">
+  <meta property="og:url" content="https://sales-website-blueprint.vercel.app/">
   <meta property="og:title" content="Northwind — Find your perfect product">
   <meta property="og:description" content="Browse our range, compare with confidence, and let our guided finder match you in under a minute.">
+  <meta property="og:image" content="https://sales-website-blueprint.vercel.app/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Northwind — Find your perfect product">
+  <meta name="twitter:description" content="Browse our range, compare with confidence, and let our guided finder match you in under a minute.">
+  <meta name="twitter:image" content="https://sales-website-blueprint.vercel.app/assets/img/og.png">
 
   <!-- Fonts (swap or self-host in production) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,6 +105,7 @@
         </div>
         <p class="catalog__count" id="catalog-count" aria-live="polite"></p>
         <div class="product-grid" id="product-grid"></div>
+        <div class="catalog-more" id="catalog-more" hidden></div>
       </div>
     </section>
 
@@ -222,6 +235,9 @@
   <!-- Back to top -->
   <button class="to-top" id="to-top" aria-label="Back to top" type="button"></button>
 
+  <!-- Interactive setup guide launcher (auto-hides once the essentials are done) -->
+  <button class="setup-launcher" id="setup-launcher" data-open-setup type="button" aria-haspopup="dialog" hidden></button>
+
   <!-- Theme preset switcher (showcase: pick ONE for production) -->
   <button class="theme-fab" id="theme-fab" type="button" aria-expanded="false" aria-controls="theme-panel">
     <span id="theme-fab-icon"></span><span>Theme</span>
@@ -269,6 +285,22 @@
     <div class="modal__panel modal__panel--wide">
       <button class="modal__close" aria-label="Close comparison" data-modal-close></button>
       <div id="compare-modal-content"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="setup-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Set up your site">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__panel">
+      <button class="modal__close" aria-label="Close setup guide" data-modal-close></button>
+      <div id="setup-content"></div>
+    </div>
+  </div>
+
+  <div class="modal modal--drawer" id="cart-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Your cart">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__panel cart-panel">
+      <button class="modal__close" aria-label="Close cart" data-modal-close></button>
+      <div id="cart-content"></div>
     </div>
   </div>
 

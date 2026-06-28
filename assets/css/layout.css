@@ -314,6 +314,15 @@
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: var(--sp-5);
 }
+.catalog-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-6);
+}
+.catalog-more__n { opacity: .75; font-weight: var(--fw-semibold); }
+.catalog-more__hint { font-size: var(--fs-sm); color: var(--text-muted); margin: 0; }
 .product-card { display: flex; flex-direction: column; overflow: hidden; }
 .product-card__media {
   position: relative;

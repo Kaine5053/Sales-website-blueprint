@@ -45,7 +45,7 @@ No framework, no build step. Open `index.html` or serve the folder.
 ```bash
 npm start          # serve locally (npx serve .) — use http, not file://
 npm run check      # zero-dependency smoke test (scripts/check.mjs)
-npm test           # smoke + e2e regression + edge + axe a11y (needs playwright+axe)
+npm test           # check + api + e2e + edge + cart + a11y (needs playwright+axe)
 npm run test:a11y  # axe-core audit — MUST stay at 0 violations (light + dark)
 ```
 
@@ -56,9 +56,8 @@ every push/PR. Deploys to Vercel automatically on push (static, config in
 
 ## Handover / continuing the project
 
-Start with `docs/HANDOVER.md` (status, caveats, next steps) and
-`docs/SESSION-LOG.md` (iteration history). Working branch:
-`claude/sales-website-blueprint-l7h0zv`.
+Start with `docs/HANDOVER.md` (full handover) and `docs/SESSION-LOG.md`
+(iteration history). Working branch: `claude/github-repo-website-build-k8c1mh`.
 
 ## When making changes
 

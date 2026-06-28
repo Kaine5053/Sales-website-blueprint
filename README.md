@@ -168,11 +168,75 @@ side-by-side matrix (price, rating, specs, feature presence) that auto-highlight
 the lowest price and top-rated options. It reads straight from `products.js` —
 add a spec or feature to a product and it appears in the table automatically.
 
+## 🧭 Not sure where to start? Use the in-app setup guide
+
+Open the site and click **“Set up your site”** (bottom-right). It's a live
+checklist that auto-detects which blueprint placeholders you still need to
+replace — brand, products, imagery, contact details, domain/SEO, the contact-form
+endpoint (plus optional payments and analytics) — and points you at the exact
+file and field to edit. It tracks progress and disappears once the essentials are
+done. Turn it off any time with `setup: { enabled: false }` in `config.js`.
+
 ## 🔌 Going to production — wiring up the forms
 
-The contact and newsletter forms are front-end only (they show a success toast).
-To make them real, point them at your backend or a form service (Formspree,
-Basin, Netlify Forms, your own API) inside `app.js` → `initEvents()`.
+The contact and newsletter forms work with **no code changes** — just set an
+endpoint in `config.js`:
+
+- `contact.endpoint` — the contact/quote form
+- `footer.newsletter.endpoint` — the footer signup
+
+Leave them `''` (the default) and the forms stay a front-end demo (success toast
+only). Set either to a form endpoint — Formspree, Basin, Web3Forms, Netlify
+Forms or your own API — and that form POSTs its fields as multipart `FormData`
+(the contact form also includes a `products` field with the current quote
+selection). While a request is in flight the submit button is disabled and shows
+“Sending…”; on a network/HTTP error the form is left intact so the visitor can
+retry. No keys or secrets live in the repo — only the endpoint URL.
+
+### Selling: quote requests vs. Stripe checkout
+
+`config.commerce.mode` switches the buying flow:
+
+- **`'quote'` (default)** — lead-gen. Products go into a quote basket that
+  pre-fills the contact form. No payment, no backend.
+- **`'cart'`** — buy-now. Products go into a cart and check out via **Stripe
+  Checkout** (Stripe's hosted, PCI-compliant payment page). Enable it with:
+
+  1. Set `commerce: { mode: 'cart' }` in `config.js`.
+  2. Deploy on a host that runs the `api/checkout.js` serverless function
+     (Vercel does this automatically — `vercel.json` bundles the catalogue with
+     it via `includeFiles`).
+  3. In your host's **environment variables** (never in the repo) set
+     `STRIPE_SECRET_KEY` (your `sk_live_…` / `sk_test_…`), and optionally
+     `CHECKOUT_BASE_URL` (the absolute site URL for the post-payment redirect;
+     defaults to the request host).
+  4. Optionally add `stripePriceId: 'price_…'` to products in `products.js` to
+     bill pre-created Stripe Prices. Without one, the price from `products.js`
+     is used (built into inline `price_data`), so it works immediately.
+
+  **The server never trusts client-sent prices** — `api/checkout.js` recomputes
+  every line (incl. variant deltas) from the same `products.js` the site renders
+  from. After payment, Stripe returns the buyer to `/?checkout=success` (cart is
+  cleared) or `/?checkout=cancelled`.
+
+### Security headers (CSP etc.)
+
+`vercel.json` ships a hardened header set applied to every route: a
+**Content-Security-Policy** (`script-src 'self'` — no inline scripts, which is
+why image fallbacks use a delegated handler, not inline `onerror`),
+`Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: DENY`, `Referrer-Policy` and a restrictive `Permissions-Policy`.
+The CSP allows Google Fonts, `https:` images (so you can host real product
+imagery anywhere) and `https:` connections (so your configured form endpoint
+works). **If you enable a third-party analytics script** (GA4, Plausible), add
+its script origin to `script-src` in `vercel.json`. `npm run check` fails the
+build if an inline `on*=` handler is reintroduced (it would be CSP-blocked).
+
+### Before you go live (domain placeholders)
+
+Swap `https://sales-website-blueprint.vercel.app` for your domain in
+`sitemap.xml`, `robots.txt`, and the `canonical` / `og:url` / `og:image` tags in
+`index.html`, and replace `assets/img/og.png` with your own 1200×630 share image.
 
 **Analytics** is already wired to a single `track()` helper in `app.js` and gated
 behind cookie consent. Set `analytics.provider` and `analytics.id` in `config.js`

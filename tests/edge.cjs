@@ -53,6 +53,59 @@ const ok=(n,c)=>{r.push((c?'✓':'✗')+' '+n); if(!c)f++;};
   ok('compare reopens cleanly', (await p.$eval('#compare-modal',m=>m.getAttribute('aria-hidden')))==='false');
   await p.keyboard.press('Escape');
 
+  // pagination / "show more": shrink the page size and confirm it reveals the rest
+  await p.evaluate(()=>document.querySelector('#products').scrollIntoView()); await p.waitForTimeout(120);
+  await p.evaluate(()=>{ window.SITE_CONFIG.catalog.pageSize=6; });
+  await p.click('[data-category="All"]'); await p.waitForTimeout(150);
+  ok('pagination shows first page of 6', (await p.$$('#product-grid .product-card')).length===6);
+  ok('load-more button present', !!(await p.$('[data-load-more]')));
+  await p.click('[data-load-more]'); await p.waitForTimeout(150);
+  ok('load-more reveals the rest (12)', (await p.$$('#product-grid .product-card')).length===12);
+  ok('load-more hides when exhausted', !(await p.$('[data-load-more]')));
+
+  // configurable form backend: success path POSTs to the endpoint + clears form
+  await p.evaluate(()=>{
+    window.__fetchCalls=[];
+    window.SITE_CONFIG.contact.endpoint='https://example.test/submit';
+    window.fetch=(url,opts)=>{ window.__fetchCalls.push({url,hasBody:!!(opts&&opts.body)}); return Promise.resolve({ok:true,json:()=>Promise.resolve({})}); };
+  });
+  await p.evaluate(()=>document.querySelector('#contact').scrollIntoView()); await p.waitForTimeout(120);
+  await p.fill('#cf-name','Test User'); await p.fill('#cf-email','t@e.com'); await p.fill('#cf-message','hi');
+  await p.click('#contact-form [type="submit"]'); await p.waitForTimeout(200);
+  const call=await p.evaluate(()=>window.__fetchCalls[0]);
+  ok('contact endpoint POSTs to configured URL', !!call && call.url==='https://example.test/submit' && call.hasBody);
+  ok('contact form resets after successful POST', (await p.$eval('#cf-name',n=>n.value))==='');
+
+  // failure path leaves the form intact so the visitor can retry
+  await p.evaluate(()=>{ window.fetch=()=>Promise.resolve({ok:false,status:500}); });
+  await p.fill('#cf-name','Retry Me'); await p.fill('#cf-email','r@e.com'); await p.fill('#cf-message','again');
+  await p.click('#contact-form [type="submit"]'); await p.waitForTimeout(200);
+  ok('contact form kept intact after failed POST', (await p.$eval('#cf-name',n=>n.value))==='Retry Me');
+
+  // interactive setup guide: the demo still has every placeholder, so the
+  // launcher shows "Set up your site (6)" and all essentials read as "to do".
+  ok('setup launcher visible on unconfigured demo', (await p.$eval('#setup-launcher', (n) => n.hidden)) === false);
+  await p.click('#setup-launcher'); await p.waitForTimeout(250);
+  ok('setup modal opens', (await p.$eval('#setup-modal', (m) => m.getAttribute('aria-hidden'))) === 'false');
+  ok('setup lists all tasks (6 essential + 2 optional)', (await p.$$('.setup-item')).length === 8);
+  ok('setup progressbar tracks 6 essentials', (await p.$eval('.setup-progress', (n) => n.getAttribute('aria-valuemax'))) === '6');
+  // brand is still "Northwind" → that task must read as not-done regardless of test order
+  ok('unreplaced brand reads as to-do', (await p.$eval('.setup-item', (n) => n.classList.contains('is-done'))) === false);
+  await p.click('[data-setup-dismiss]'); await p.waitForTimeout(150);
+  ok('dismiss hides the launcher + persists', (await p.$eval('#setup-launcher', (n) => n.hidden)) === true
+    && (await p.evaluate(() => localStorage.getItem('setup-dismissed'))) === '1');
+
+  // image fallback now runs via a delegated capture-phase handler (CSP-safe,
+  // no inline onerror): a broken image with data-imgfallback should be hidden
+  const fb = await p.evaluate(()=> new Promise((resolve)=>{
+    const img=document.createElement('img');
+    img.setAttribute('data-imgfallback','hide');
+    img.addEventListener('error', ()=> setTimeout(()=>resolve(img.style.visibility),60));
+    img.src='/this-image-does-not-exist-'+Math.random().toString(36).slice(2)+'.png';
+    document.body.appendChild(img);
+  }));
+  ok('delegated image fallback hides broken img', fb==='hidden');
+
   ok('no JS errors during edge tests', errors.length===0);
   console.log(r.join('\n')); if(errors.length) console.log('\nERRORS:\n'+errors.join('\n'));
   console.log('\n'+(f?`\x1b[31m${f} FAILED\x1b[0m`:'\x1b[32mALL PASS\x1b[0m'));

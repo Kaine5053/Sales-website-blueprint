@@ -22,6 +22,29 @@ window.SITE_CONFIG = {
      Leave empty to use the English defaults. */
   ui: {},
 
+  /* ---- Interactive setup guide ----
+     A floating onboarding checklist that auto-detects which blueprint
+     placeholders you still need to replace (brand, products, imagery, domain,
+     contact form, …). It hides itself once every essential item is done. Set
+     enabled:false to switch it off entirely (e.g. for a finished production site). */
+  setup: { enabled: true },
+
+  /* ---- Commerce mode ----
+     'quote' (default): the lead-gen flow — products go into a quote basket that
+       pre-fills the contact form. No payment.
+     'cart': a buy-now flow — products go into a cart and check out via Stripe
+       (hosted Checkout). Requires the /api/checkout serverless function and a
+       STRIPE_SECRET_KEY env var in your host (see api/checkout.js). Optionally
+       add `stripePriceId` to products in products.js; otherwise the price from
+       products.js is used. checkoutEndpoint is where the cart is POSTed. */
+  commerce: { mode: 'quote', checkoutEndpoint: '/api/checkout' },
+
+  /* ---- Catalogue behaviour ----
+     pageSize = how many products to show before a "Show more" button appears.
+     Set 0 (or omit) to always show every product. The current demo catalogue
+     fits in one page; raise the catalogue and the button appears automatically. */
+  catalog: { pageSize: 6 },
+
   /* ---- Brand identity ---- */
   brand: {
     name: 'Northwind',
@@ -211,6 +234,11 @@ window.SITE_CONFIG = {
     email: 'hello@northwind.example',
     phone: '+44 20 7946 0000',
     address: '1 Commerce Street, London, EC1A 1AA',
+    // Optional backend. Leave '' for the front-end demo (success toast only).
+    // Set to a form endpoint (Formspree/Basin/Web3Forms/Netlify/your own API)
+    // and the contact form POSTs its fields there as multipart FormData,
+    // including a `products` field with the current quote selection.
+    endpoint: '',
   },
 
   /* ---- Footer ---- */
@@ -222,6 +250,8 @@ window.SITE_CONFIG = {
       placeholder: 'you@company.com',
       cta: 'Subscribe',
       note: 'No spam. Unsubscribe anytime.',
+      // Optional backend (see contact.endpoint). '' = demo (toast only).
+      endpoint: '',
     },
     columns: [
       { title: 'Product', links: [ { label: 'All products', href: '#products' }, { label: 'Pricing', href: '#pricing' }, { label: 'What’s new', href: '#products' }, { label: 'Guided finder', href: '#', action: 'open-quiz' } ] },
