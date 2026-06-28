@@ -25,5 +25,9 @@ const axeSrc = fs.readFileSync(axePath, 'utf8');
   await p.evaluate(()=>document.documentElement.setAttribute('data-theme','light'));
   await p.click('[data-action="open-quiz"]'); await p.waitForTimeout(300);
   await scan('Finder modal');
+  // setup guide modal (launcher is visible on the unconfigured demo)
+  await p.keyboard.press('Escape'); await p.waitForTimeout(150);
+  await p.click('#setup-launcher'); await p.waitForTimeout(300);
+  await scan('Setup guide modal');
   await b.close();
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});

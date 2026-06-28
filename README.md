@@ -168,6 +168,15 @@ side-by-side matrix (price, rating, specs, feature presence) that auto-highlight
 the lowest price and top-rated options. It reads straight from `products.js` —
 add a spec or feature to a product and it appears in the table automatically.
 
+## 🧭 Not sure where to start? Use the in-app setup guide
+
+Open the site and click **“Set up your site”** (bottom-right). It's a live
+checklist that auto-detects which blueprint placeholders you still need to
+replace — brand, products, imagery, contact details, domain/SEO, the contact-form
+endpoint (plus optional payments and analytics) — and points you at the exact
+file and field to edit. It tracks progress and disappears once the essentials are
+done. Turn it off any time with `setup: { enabled: false }` in `config.js`.
+
 ## 🔌 Going to production — wiring up the forms
 
 The contact and newsletter forms work with **no code changes** — just set an

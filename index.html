@@ -235,6 +235,9 @@
   <!-- Back to top -->
   <button class="to-top" id="to-top" aria-label="Back to top" type="button"></button>
 
+  <!-- Interactive setup guide launcher (auto-hides once the essentials are done) -->
+  <button class="setup-launcher" id="setup-launcher" data-open-setup type="button" aria-haspopup="dialog" hidden></button>
+
   <!-- Theme preset switcher (showcase: pick ONE for production) -->
   <button class="theme-fab" id="theme-fab" type="button" aria-expanded="false" aria-controls="theme-panel">
     <span id="theme-fab-icon"></span><span>Theme</span>
@@ -282,6 +285,14 @@
     <div class="modal__panel modal__panel--wide">
       <button class="modal__close" aria-label="Close comparison" data-modal-close></button>
       <div id="compare-modal-content"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="setup-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Set up your site">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__panel">
+      <button class="modal__close" aria-label="Close setup guide" data-modal-close></button>
+      <div id="setup-content"></div>
     </div>
   </div>
 

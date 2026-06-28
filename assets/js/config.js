@@ -22,6 +22,13 @@ window.SITE_CONFIG = {
      Leave empty to use the English defaults. */
   ui: {},
 
+  /* ---- Interactive setup guide ----
+     A floating onboarding checklist that auto-detects which blueprint
+     placeholders you still need to replace (brand, products, imagery, domain,
+     contact form, …). It hides itself once every essential item is done. Set
+     enabled:false to switch it off entirely (e.g. for a finished production site). */
+  setup: { enabled: true },
+
   /* ---- Commerce mode ----
      'quote' (default): the lead-gen flow — products go into a quote basket that
        pre-fills the contact form. No payment.

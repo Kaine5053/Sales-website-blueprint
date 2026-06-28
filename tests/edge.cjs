@@ -82,6 +82,19 @@ const ok=(n,c)=>{r.push((c?'✓':'✗')+' '+n); if(!c)f++;};
   await p.click('#contact-form [type="submit"]'); await p.waitForTimeout(200);
   ok('contact form kept intact after failed POST', (await p.$eval('#cf-name',n=>n.value))==='Retry Me');
 
+  // interactive setup guide: the demo still has every placeholder, so the
+  // launcher shows "Set up your site (6)" and all essentials read as "to do".
+  ok('setup launcher visible on unconfigured demo', (await p.$eval('#setup-launcher', (n) => n.hidden)) === false);
+  await p.click('#setup-launcher'); await p.waitForTimeout(250);
+  ok('setup modal opens', (await p.$eval('#setup-modal', (m) => m.getAttribute('aria-hidden'))) === 'false');
+  ok('setup lists all tasks (6 essential + 2 optional)', (await p.$$('.setup-item')).length === 8);
+  ok('setup progressbar tracks 6 essentials', (await p.$eval('.setup-progress', (n) => n.getAttribute('aria-valuemax'))) === '6');
+  // brand is still "Northwind" → that task must read as not-done regardless of test order
+  ok('unreplaced brand reads as to-do', (await p.$eval('.setup-item', (n) => n.classList.contains('is-done'))) === false);
+  await p.click('[data-setup-dismiss]'); await p.waitForTimeout(150);
+  ok('dismiss hides the launcher + persists', (await p.$eval('#setup-launcher', (n) => n.hidden)) === true
+    && (await p.evaluate(() => localStorage.getItem('setup-dismissed'))) === '1');
+
   // image fallback now runs via a delegated capture-phase handler (CSP-safe,
   // no inline onerror): a broken image with data-imgfallback should be hidden
   const fb = await p.evaluate(()=> new Promise((resolve)=>{

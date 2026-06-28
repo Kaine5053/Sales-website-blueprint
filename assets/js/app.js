@@ -50,6 +50,11 @@
     checkoutError: 'Couldn’t start checkout — please try again.', checkoutStarting: 'Starting secure checkout…',
     checkoutSuccess: 'Thank you! Your order is confirmed.', checkoutCancelled: 'Checkout cancelled — your cart is saved.',
     viewCart: 'View cart',
+    setupLaunch: 'Set up your site ({n})', setupTitle: 'Set up your site',
+    setupIntro: 'A quick checklist to make this blueprint yours. It updates automatically as you edit the config — and disappears once the essentials are done.',
+    setupProgress: '{done} of {total} essentials done', setupDone: 'Done', setupTodo: 'To do',
+    setupOptional: 'Optional', setupDismiss: 'Dismiss for now', setupHideForever: 'I’m finished — hide this',
+    setupAllDone: 'All set! 🎉 Every essential is configured.',
     toastCopied: 'Link copied to clipboard', toastCompareMax: 'You can compare up to {max} products at once.',
     stockIn: 'In stock', stockLow: 'Low stock', stockOut: 'Sold out',
   };
@@ -1390,6 +1395,104 @@
   }
 
   /* ====================================================================
+     SETUP GUIDE — onboarding checklist that auto-detects unreplaced blueprint
+     placeholders. Read-only: it inspects config/products/DOM and tells the
+     owner what to edit. Hides itself once every essential item is done, or when
+     setup.enabled is false / it's been dismissed.
+     ==================================================================== */
+  const setupCfg = cfg.setup || {};
+  const DEMO_IDS = ['aurora-core', 'aurora-pro', 'aurora-max', 'nimbus-lite', 'nimbus-flex', 'titan-x',
+    'breeze-mini', 'aurora-air', 'nimbus-studio', 'vertex-team', 'titan-pro', 'apex-grid'];
+
+  function setupTasks() {
+    const c = cfg.contact || {};
+    const a = cfg.analytics || {};
+    const com = cfg.commerce || {};
+    const canonical = (document.querySelector('link[rel="canonical"]') || {}).href || '';
+    const hasDemoProducts = PRODUCTS.some((p) => DEMO_IDS.includes(p.id));
+    const placeholderImgs = PRODUCTS.some((p) => /assets\/img\/(product-\d+|hero)\.svg$/.test(p.image || ''));
+    return [
+      { key: 'brand', title: 'Set your brand name & logo', optional: false,
+        done: !!(cfg.brand && cfg.brand.name && cfg.brand.name !== 'Northwind'),
+        how: 'Edit <code>assets/js/config.js</code> → <code>brand</code> (name, tagline, and the inline <code>logoSvg</code>).' },
+      { key: 'products', title: 'Add your own products', optional: false,
+        done: !hasDemoProducts,
+        how: 'Replace the demo entries in <code>assets/js/products.js</code> with your catalogue (name, price, features, specs, and the <code>attrs</code> the finder scores on).' },
+      { key: 'images', title: 'Replace the placeholder imagery', optional: false,
+        done: !placeholderImgs,
+        how: 'Swap the gradient SVGs in <code>assets/img/</code> for real photos and point each product’s <code>image</code> at them. Replace <code>og.png</code> with your 1200×630 share image.' },
+      { key: 'contact', title: 'Add your contact details', optional: false,
+        done: !!(c.email && !/\.example$/i.test(String(c.email))),
+        how: 'Edit <code>config.js</code> → <code>contact</code> (email, phone, address).' },
+      { key: 'domain', title: 'Point SEO at your domain', optional: false,
+        done: !!(canonical && !/sales-website-blueprint\.vercel\.app/.test(canonical)),
+        how: 'Replace the blueprint domain in <code>index.html</code> (canonical + og tags), <code>sitemap.xml</code> and <code>robots.txt</code>.' },
+      { key: 'leads', title: 'Connect the contact form', optional: false,
+        done: !!(c.endpoint && String(c.endpoint).trim()),
+        how: 'Set <code>contact.endpoint</code> in config.js to a form service (Formspree / Basin / Web3Forms / Netlify) or your own API — otherwise the form only shows a success message.' },
+      { key: 'payments', title: 'Turn on payments', optional: true,
+        done: com.mode === 'cart',
+        how: 'For a buy-now flow set <code>commerce.mode:&#39;cart&#39;</code> and add <code>STRIPE_SECRET_KEY</code> in your host’s env. Leave it <code>&#39;quote&#39;</code> for lead-gen. See README → “Selling”.' },
+      { key: 'analytics', title: 'Enable analytics', optional: true,
+        done: !!(a.provider && a.provider !== 'stub'),
+        how: 'Set <code>analytics.provider</code> + <code>id</code> in config.js (GA4 or Plausible), then add its script origin to the CSP in <code>vercel.json</code>.' },
+    ];
+  }
+
+  function setupRemaining() { return setupTasks().filter((x) => !x.optional && !x.done).length; }
+
+  function renderSetupLauncher() {
+    const launcher = $('#setup-launcher');
+    if (!launcher) return;
+    const off = !setupCfg.enabled || lsGet('setup-dismissed') === '1';
+    const remaining = setupRemaining();
+    launcher.hidden = off || remaining === 0; // disappears once the essentials are done
+    if (!launcher.hidden) {
+      launcher.innerHTML = `${icon('sparkles')}<span class="setup-launcher__txt">${esc(t('setupLaunch', { n: remaining }))}</span>`;
+    }
+  }
+
+  function openSetup() {
+    const tasks = setupTasks();
+    const essential = tasks.filter((x) => !x.optional);
+    const doneCount = essential.filter((x) => x.done).length;
+    const pct = Math.round((doneCount / essential.length) * 100);
+    const allDone = doneCount === essential.length;
+    const rows = tasks.map((task) => `
+      <li class="setup-item ${task.done ? 'is-done' : ''}">
+        <span class="setup-check" aria-hidden="true">${task.done ? icon('check') : ''}</span>
+        <div class="setup-item__body">
+          <span class="setup-item__title">${esc(task.title)}
+            ${task.optional ? `<span class="setup-tag">${esc(t('setupOptional'))}</span>` : ''}
+            <span class="setup-status">${task.done ? esc(t('setupDone')) : esc(t('setupTodo'))}</span>
+          </span>
+          <p class="setup-item__how">${task.how}</p>
+        </div>
+      </li>`).join('');
+    $('#setup-content').innerHTML = `
+      <div class="setup-head">
+        <h2 id="setup-title">${esc(t('setupTitle'))}</h2>
+        <p class="setup-intro">${esc(t('setupIntro'))}</p>
+        <div class="setup-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${essential.length}" aria-valuenow="${doneCount}" aria-label="${esc(t('setupProgress', { done: doneCount, total: essential.length }))}">
+          <div class="setup-progress__bar" style="width:${pct}%"></div>
+        </div>
+        <p class="setup-progress__label">${allDone ? esc(t('setupAllDone')) : esc(t('setupProgress', { done: doneCount, total: essential.length }))}</p>
+      </div>
+      <ul class="setup-list" role="list">${rows}</ul>
+      <div class="setup-foot">
+        <button class="btn btn--ghost btn--sm" data-setup-dismiss>${esc(t('setupHideForever'))}</button>
+      </div>`;
+    openModal('#setup-modal');
+  }
+
+  function dismissSetup() {
+    lsSet('setup-dismissed', '1');
+    const m = $('#setup-modal');
+    if (m && m.getAttribute('aria-hidden') === 'false') closeModal(m);
+    renderSetupLauncher();
+  }
+
+  /* ====================================================================
      COOKIE CONSENT + ANALYTICS (analytics loads only after consent)
      ==================================================================== */
   function track(event, data) {
@@ -1556,7 +1659,7 @@
     }, true);
 
     document.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-add-cart], [data-open-cart], [data-cart-remove], [data-cart-qty], [data-cart-checkout], [data-resource], [data-product], [data-category], [data-filter], [data-load-more], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
+      const t = e.target.closest('[data-action], [data-compare], [data-fave], [data-share], [data-faves-only], [data-opt], [data-product-request], [data-product-notify], [data-quote-remove], [data-add-cart], [data-open-cart], [data-cart-remove], [data-cart-qty], [data-cart-checkout], [data-open-setup], [data-setup-dismiss], [data-resource], [data-product], [data-category], [data-filter], [data-load-more], [data-quiz-option], [data-quiz-next], [data-quiz-back], [data-quiz-restart], [data-close-modal], [data-close-drawer], [data-modal-close]');
       if (!t) return;
 
       if (t.matches('[data-action="open-quiz"]') || t.dataset.action === 'open-quiz') { e.preventDefault(); openQuiz(); return; }
@@ -1581,6 +1684,8 @@
       if (t.hasAttribute('data-cart-remove')) { e.preventDefault(); removeFromCart(t.getAttribute('data-cart-remove')); return; }
       if (t.hasAttribute('data-cart-qty')) { e.preventDefault(); changeQty(t.getAttribute('data-cart-qty'), Number(t.getAttribute('data-delta'))); return; }
       if (t.hasAttribute('data-cart-checkout')) { e.preventDefault(); checkout(); return; }
+      if (t.hasAttribute('data-open-setup')) { e.preventDefault(); openSetup(); return; }
+      if (t.hasAttribute('data-setup-dismiss')) { e.preventDefault(); dismissSetup(); return; }
       if (t.hasAttribute('data-fave')) { e.preventDefault(); e.stopPropagation(); toggleFave(t.getAttribute('data-fave')); return; }
       if (t.hasAttribute('data-share')) { e.preventDefault(); e.stopPropagation(); shareProduct(t.getAttribute('data-share')); return; }
       if (t.hasAttribute('data-compare')) { e.preventDefault(); e.stopPropagation(); toggleCompare(t.getAttribute('data-compare')); return; }
@@ -1740,6 +1845,7 @@
     safe('quote', renderQuote);
     safe('cart', () => { renderCartButton(); renderCart(); });
     safe('checkoutReturn', handleCheckoutReturn);
+    safe('setup', renderSetupLauncher);
     safe('structuredData', injectStructuredData);
     safe('events', initEvents);
     safe('scroll', initScroll);

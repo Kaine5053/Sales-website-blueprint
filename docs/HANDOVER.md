@@ -144,8 +144,7 @@ Static site, config in `vercel.json` (clean URLs + asset caching).
 
 1. **Real product/CMS data** + real imagery.
 2. **Live stock** behind the static `stock` field (a configurable stock endpoint).
-3. An **interactive setup guide** / onboarding checklist for non-technical owners.
-4. Optional: self-host fonts, add more presets, more finder questions, order
+3. Optional: self-host fonts, add more presets, more finder questions, order
    confirmation emails (Stripe webhook → email), variant-level Stripe Price IDs.
 
 _Done in iteration 14: variant options now carry into the quote basket — chosen
@@ -173,6 +172,11 @@ _Done in iteration 19: cart + Stripe Checkout (`commerce.mode='cart'`) —
 add-to-cart (carrying variants), cart drawer with qty, and a price-authoritative
 `api/checkout.js` serverless function (server sources prices, env-only secret).
 `tests/api.cjs` + `tests/cart.cjs` cover it. Default mode stays `'quote'`._
+
+_Done in iteration 20: interactive setup guide — a floating checklist that
+auto-detects unreplaced placeholders (brand, products, imagery, contact, domain,
+form endpoint, + optional payments/analytics), shows progress, and points to the
+exact file/field to edit. Hides once essentials are done; `setup.enabled` flag._
 
 ---
 
